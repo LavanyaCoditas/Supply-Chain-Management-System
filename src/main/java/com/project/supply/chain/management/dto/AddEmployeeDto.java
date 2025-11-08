@@ -11,6 +11,7 @@ import lombok.NoArgsConstructor;
     public class AddEmployeeDto {
         private String email;
         private String username;
+        private Long phone;
 
     }
 

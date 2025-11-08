@@ -92,6 +92,7 @@ public ApiResponse<Void> createEmployeeAsPlantHead(AddEmployeeDto dto) {
     user.setUsername(dto.getUsername());
     user.setPassword(passwordEncoder.encode(defaultPassword));
     user.setRole(Role.PLANT_HEAD);
+    user.setPhone(dto.getPhone());
     user.setIsActive(Account_Status.ACTIVE);
     userRepository.save(user);
 

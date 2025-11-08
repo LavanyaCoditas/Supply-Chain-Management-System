@@ -80,6 +80,10 @@ public SignupResponseDto registerUser(UserSignupDto userSignupDto) throws IOExce
     public LoginResponseDto loginUser(LoginDto loginDto) {
         User user = userRepository.findByEmail(loginDto.getEmail());
 
+        if(user == null)
+        {
+            throw  new RuntimeException("USer not found ");
+        }
         if (!passwordEncoder.matches(loginDto.getPassword(), user.getPassword())) {
             throw new RuntimeException("Invalid password");
         }

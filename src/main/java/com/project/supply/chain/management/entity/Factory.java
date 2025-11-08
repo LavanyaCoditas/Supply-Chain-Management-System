@@ -31,6 +31,7 @@ public class Factory {
     private Account_Status isActive;
 
     private LocalDateTime createdAt = LocalDateTime.now();
+
     private LocalDateTime updatedAt = LocalDateTime.now();
 
     @OneToMany(mappedBy = "factory")

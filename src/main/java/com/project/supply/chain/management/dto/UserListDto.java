@@ -20,4 +20,3 @@ import lombok.NoArgsConstructor;
         private Long phone;
     }
 
-
