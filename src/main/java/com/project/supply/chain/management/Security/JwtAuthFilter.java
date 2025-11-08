@@ -1,5 +1,6 @@
 package com.project.supply.chain.management.Security;
 
+import com.project.supply.chain.management.ServiceImplementations.TokenBlacklistService;
 import com.project.supply.chain.management.util.AuthUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -18,17 +19,21 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
-
 @Component
 public class JwtAuthFilter extends OncePerRequestFilter {
 
     @Autowired
     private AuthUtil authUtil;
 
+    @Autowired
+    private TokenBlacklistService tokenBlacklistService;
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
+
         String path = request.getRequestURI();
+
         // Skip JWT validation for public endpoints
         if (path.equals("/api/auth/login") || path.equals("/api/auth/signup")) {
             filterChain.doFilter(request, response);
@@ -36,24 +41,37 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         }
 
         String authHeader = request.getHeader("Authorization");
+
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        String token = authHeader.substring(7);
-        if (authUtil.validateToken(token)) {
-            String username = authUtil.getUserNameFromToken(token);
-            String role = authUtil.getRoleFromToken(token);
+        // Extract JWT token
+        String jwt = authHeader.substring(7);
+
+        //  Check if token is blacklisted
+        if (tokenBlacklistService.isTokenBlacklisted(jwt)) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json");
+            response.getWriter().write("{\"success\":false, \"message\":\"Token has been revoked. Please log in again.\"}");
+            return;
+        }
+
+
+        if (authUtil.validateToken(jwt)) {
+            String username = authUtil.getUserNameFromToken(jwt);
+            String role = authUtil.getRoleFromToken(jwt);
 
             List<GrantedAuthority> authorities = Collections.singletonList(new SimpleGrantedAuthority(role));
-            UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(username, null, authorities);
+
+            UsernamePasswordAuthenticationToken authentication =
+                    new UsernamePasswordAuthenticationToken(username, null, authorities);
+
             authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
             SecurityContextHolder.getContext().setAuthentication(authentication);
         }
 
         filterChain.doFilter(request, response);
     }
-
-
 }

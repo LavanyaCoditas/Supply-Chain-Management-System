@@ -1,13 +1,11 @@
 package com.project.supply.chain.management.Controllers;
 
+import com.project.supply.chain.management.ServiceImplementations.AuthService;
 import com.project.supply.chain.management.ServiceImplementations.CloudinaryService;
 import com.project.supply.chain.management.ServiceImplementations.UserServiceImpl;
 
 import com.project.supply.chain.management.ServiceInterfaces.UserService;
-import com.project.supply.chain.management.dto.LoginDto;
-import com.project.supply.chain.management.dto.LoginResponseDto;
-import com.project.supply.chain.management.dto.SignupResponseDto;
-import com.project.supply.chain.management.dto.UserSignupDto;
+import com.project.supply.chain.management.dto.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -37,6 +35,13 @@ public class AuthenticationController
         return ResponseEntity.ok(userService.loginUser(loginDto));
     }
 
+    @Autowired
+    private AuthService authService;
+
+    @PostMapping("/logout")
+    public ApiResponse<Void> logout(@RequestHeader(value = "Authorization", required = false) String token) {
+        return authService.logout(token);
+    }
     }
 
 
