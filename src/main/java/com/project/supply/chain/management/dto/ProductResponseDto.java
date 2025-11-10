@@ -16,6 +16,7 @@ public class ProductResponseDto {
     private BigDecimal price;
     private Integer rewardPts;
     private String categoryName;
+    private Long threshold;
     private String imageUrl;
     private Account_Status isActive;
 }

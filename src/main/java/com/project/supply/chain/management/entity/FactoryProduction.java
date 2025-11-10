@@ -3,6 +3,8 @@ package com.project.supply.chain.management.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "factory_production")
 @Data
@@ -22,5 +24,7 @@ public class FactoryProduction {
     private Product product;
 
     private Integer producedQty;
+
+    private LocalDateTime productionDate;
 }
 

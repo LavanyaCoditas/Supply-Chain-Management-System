@@ -1,7 +1,10 @@
 package com.project.supply.chain.management.entity;
 
+import com.project.supply.chain.management.constants.Account_Status;
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "merchandise")
@@ -17,6 +20,8 @@ public class Merchandise {
 
     @Column(columnDefinition = "text")
     private String image;
-
-    private Integer rewardPoints;
+    private Long quantity;
+    private Long rewardPoints;
+    private LocalDateTime createdAt;
+    private Account_Status isActive;
 }

@@ -9,6 +9,9 @@ import lombok.*;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@ToString(exclude = {"user"})
+
+
 public class UserFactoryMapping {
 
     @Id

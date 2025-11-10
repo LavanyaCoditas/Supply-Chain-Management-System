@@ -12,6 +12,7 @@ import lombok.NoArgsConstructor;
         private String email;
         private String username;
         private Long phone;
+        private Long BayId;
 
     }
 

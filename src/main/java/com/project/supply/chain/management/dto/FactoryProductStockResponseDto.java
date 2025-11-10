@@ -3,18 +3,18 @@ package com.project.supply.chain.management.dto;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
 import java.math.BigDecimal;
+
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
-public class AddProductDto
-{
-    private String name;
-    private String prodDescription;
+@AllArgsConstructor
+public class FactoryProductStockResponseDto {
+    private Long productId;
+    private String productName;
+    private String categoryName;
     private BigDecimal price;
-    private Integer rewardPts;
-    private Long categoryId;
     private Long threshold;
+    private Integer currentQty;
     private String imageUrl;
+    private Integer rewardPts;
 }

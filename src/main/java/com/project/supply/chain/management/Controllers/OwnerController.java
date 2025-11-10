@@ -2,6 +2,7 @@ package com.project.supply.chain.management.Controllers;
 
 import com.project.supply.chain.management.ServiceInterfaces.CentralOfficeService;
 import com.project.supply.chain.management.ServiceInterfaces.FactoryService;
+import com.project.supply.chain.management.ServiceInterfaces.MerchandiseService;
 import com.project.supply.chain.management.ServiceInterfaces.UserService;
 import com.project.supply.chain.management.dto.*;
 import lombok.Getter;
@@ -29,6 +30,9 @@ public class OwnerController
     CentralOfficeService centralOfficeService;
     @Autowired
     UserService userService;
+
+    @Autowired
+    MerchandiseService merchandiseService;
 
 
     @PostMapping("/create/factory")
@@ -104,6 +108,68 @@ public ResponseEntity<ApiResponse<Void>> createFactory(@RequestBody FactoryDto f
         ApiResponse<Void> response = factoryService.deleteFactory(factoryId);
         return ResponseEntity.ok(response);
     }
+
+    @GetMapping("/production/summary")
+
+    public ResponseEntity<ApiResponse<List<FactoryProductionSummaryDto>>> getProductionSummary() {
+        ApiResponse<List<FactoryProductionSummaryDto>> response = factoryService.getFactoryProductionSummary();
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping(value = "/add", consumes = {"multipart/form-data"})
+    @PreAuthorize("hasAnyAuthority('OWNER', 'CENTRAL_OFFICE')")
+    public ResponseEntity<ApiResponse<MerchandiseResponseDto>> addMerchandise(
+            @ModelAttribute AddMerchandiseDto dto,
+            @RequestPart("image") MultipartFile imageFile
+    ) throws Exception {
+        ApiResponse<MerchandiseResponseDto> response = merchandiseService.addMerchandise(dto, imageFile);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/all/merchandise")
+    @PreAuthorize("hasAnyAuthority('OWNER', 'CENTRAL_OFFICE','DISTRIBUTOR')")
+    public ResponseEntity<ApiResponse<Page<MerchandiseResponseDto>>> getAllMerchandise(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String sort // rewardPointsAsc / rewardPointsDesc
+    ) {
+        ApiResponse<Page<MerchandiseResponseDto>> response =
+                merchandiseService.getAllMerchandise(page, size, search, sort);
+        return ResponseEntity.ok(response);
+    }
+
+    @PutMapping(value = "/update/merchandise/{id}", consumes = {"multipart/form-data"})
+    @PreAuthorize("hasAnyAuthority('OWNER', 'CENTRAL_OFFICE')")
+    public ResponseEntity<ApiResponse<MerchandiseResponseDto>> updateMerchandise(
+            @PathVariable Long id,
+            @ModelAttribute AddMerchandiseDto dto,
+            @RequestPart(value = "image", required = false) MultipartFile imageFile
+    ) throws Exception {
+        ApiResponse<MerchandiseResponseDto> response = merchandiseService.updateMerchandise(id, dto, imageFile);
+        return ResponseEntity.ok(response);
+    }
+
+    // ✅ Soft Delete Merchandise
+    @DeleteMapping("/delete/merchandise/{id}")
+    @PreAuthorize("hasAnyAuthority('OWNER', 'CENTRAL_OFFICE')")
+    public ResponseEntity<ApiResponse<Void>> deleteMerchandise(@PathVariable Long id) {
+        ApiResponse<Void> response = merchandiseService.softDeleteMerchandise(id);
+        return ResponseEntity.ok(response);
+    }
+
+    @PutMapping("/restock/{id}")
+    @PreAuthorize("hasAnyAuthority('OWNER', 'CENTRAL_OFFICE')")
+    public ResponseEntity<ApiResponse<MerchandiseResponseDto>> restockMerchandise(
+            @PathVariable Long id,
+            @RequestParam Long additionalQuantity
+    ) {
+        ApiResponse<MerchandiseResponseDto> response = merchandiseService.restockMerchandise(id, additionalQuantity);
+        return ResponseEntity.ok(response);
+    }
+
+
+    //Tools
 
 
 }

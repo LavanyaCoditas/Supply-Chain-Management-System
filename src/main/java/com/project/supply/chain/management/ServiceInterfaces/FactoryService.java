@@ -4,6 +4,7 @@ import com.cloudinary.Api;
 import com.project.supply.chain.management.dto.AddEmployeeDto;
 import com.project.supply.chain.management.dto.ApiResponse;
 import com.project.supply.chain.management.dto.FactoryDto;
+import com.project.supply.chain.management.dto.FactoryProductionSummaryDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -15,6 +16,7 @@ public interface FactoryService {
     ApiResponse<Page<FactoryDto>> getAllFactories(String search, Pageable pageable);
 
     ApiResponse<Void> updateFactory(Long factoryId, FactoryDto updateFactoryDto);
+    ApiResponse<List<FactoryProductionSummaryDto>> getFactoryProductionSummary();
 
     ApiResponse<Void> deleteFactory(Long factoryId);
 }

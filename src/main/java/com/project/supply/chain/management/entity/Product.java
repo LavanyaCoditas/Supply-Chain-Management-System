@@ -3,7 +3,9 @@ package com.project.supply.chain.management.entity;
 import com.project.supply.chain.management.constants.Account_Status;
 import jakarta.persistence.*;
         import lombok.*;
-        import java.time.LocalDateTime;
+import org.springframework.security.core.parameters.P;
+
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "products")
@@ -18,7 +20,7 @@ public class Product {
     @ManyToOne @JoinColumn(name = "category_id")
     @ToString.Exclude
     private ProductCategory category;
-
+    @Column(unique = true)
     private String name;
 
     @Column(columnDefinition = "text")
@@ -30,6 +32,9 @@ public class Product {
     private java.math.BigDecimal price;
 
     private Integer rewardPts;
+
+    @Column(name = "threshold")
+    private Long threshold;
 
     @Enumerated(EnumType.STRING)
     private Account_Status isActive;

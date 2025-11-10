@@ -4,17 +4,14 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class AddProductDto
-{
+public class MerchandiseResponseDto {
+    private Long id;
     private String name;
-    private String prodDescription;
-    private BigDecimal price;
-    private Integer rewardPts;
-    private Long categoryId;
-    private Long threshold;
+    private Long requiredPoints;
+    private Long availableQuantity;
     private String imageUrl;
+
 }

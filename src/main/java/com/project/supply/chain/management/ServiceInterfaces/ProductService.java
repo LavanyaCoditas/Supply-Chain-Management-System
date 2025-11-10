@@ -11,5 +11,6 @@ public interface ProductService {
     ApiResponse<ProductResponseDto> uploadProductWithImage(AddProductDto productDto, MultipartFile imageFile);
     ApiResponse<Page<ProductResponseDto>> getAllProducts(int page, int size, String search, String categoryName);
     ApiResponse<String> softDeleteProduct(Long productId);
+    ApiResponse<ProductResponseDto> updateProduct(Long id, AddProductDto productDto, MultipartFile imageFile) throws Exception;
 
 }

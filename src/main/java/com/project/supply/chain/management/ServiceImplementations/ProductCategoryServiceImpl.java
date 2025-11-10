@@ -4,6 +4,7 @@ import com.project.supply.chain.management.Repositories.ProductCategoryRepositor
 import com.project.supply.chain.management.ServiceInterfaces.ProductCategoryService;
 import com.project.supply.chain.management.dto.ApiResponse;
 import com.project.supply.chain.management.dto.ProductCategoryDto;
+import com.project.supply.chain.management.dto.ProductCategoryResponseDto;
 import com.project.supply.chain.management.entity.ProductCategory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
@@ -54,15 +55,29 @@ public class ProductCategoryServiceImpl implements ProductCategoryService {
         return new ApiResponse<>(true, "Category updated successfully", null);
     }
     @Override
-    public ApiResponse<List<ProductCategory>> getAllCategories(String sortBy, String sortDir) {
-
+    public ApiResponse<List<ProductCategoryResponseDto>> getAllCategories(String sortBy, String sortDir) {
+        // ✅ Determine sort direction
         Sort sort = sortDir.equalsIgnoreCase("desc") ?
                 Sort.by(sortBy).descending() :
                 Sort.by(sortBy).ascending();
 
+        // ✅ Fetch categories from DB
         List<ProductCategory> categories = categoryRepository.findAll(sort);
-        return new ApiResponse<>(true, "Categories fetched successfully", categories);
+
+        // ✅ Convert entities → DTOs (no nested products)
+        List<ProductCategoryResponseDto> categoryDtos = categories.stream()
+                .map(category -> new ProductCategoryResponseDto(
+                        category.getId(),
+                        category.getCategoryName(),
+                        category.getDescription(),
+                        category.getProducts() != null ? category.getProducts().size() : 0
+                ))
+                .toList();
+
+        // ✅ Return clean response
+        return new ApiResponse<>(true, "Categories fetched successfully", categoryDtos);
     }
+
 
     @Override
     public ApiResponse<Void> deleteProductCategory(Long categoryId) {

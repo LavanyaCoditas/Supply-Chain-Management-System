@@ -1,17 +1,11 @@
 package com.project.supply.chain.management.ServiceImplementations;
 
-import com.project.supply.chain.management.Repositories.BayRepository;
-import com.project.supply.chain.management.Repositories.FactoryRepository;
-import com.project.supply.chain.management.Repositories.UserFactoryMappingRepository;
-import com.project.supply.chain.management.Repositories.UserRepository;
+import com.project.supply.chain.management.Repositories.*;
 import com.project.supply.chain.management.ServiceInterfaces.PlantHeadService;
 import com.project.supply.chain.management.constants.Account_Status;
 import com.project.supply.chain.management.constants.Role;
 import com.project.supply.chain.management.dto.*;
-import com.project.supply.chain.management.entity.Bay;
-import com.project.supply.chain.management.entity.Factory;
-import com.project.supply.chain.management.entity.User;
-import com.project.supply.chain.management.entity.UserFactoryMapping;
+import com.project.supply.chain.management.entity.*;
 import com.project.supply.chain.management.specifications.EmployeeSpecifications;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
@@ -30,12 +24,15 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
 @RequiredArgsConstructor
 public class PlantHeadServiceImpl implements PlantHeadService {
 
+    @Autowired
+    ProductRepository productRepository;
     @Autowired
     BayRepository bayRepository;
     @Autowired
@@ -48,6 +45,12 @@ public class PlantHeadServiceImpl implements PlantHeadService {
     PasswordEncoder passwordEncoder;
     @Autowired
     EmailService emailService;
+
+    @Autowired
+    private FactoryProductionRepository factoryProductionRepository;
+
+    @Autowired
+    private FactoryInventoryStockRepository factoriesInventoryStockRepository;
 
     //    private final BayRepository bayRepository;
 //        private final UserRepository userRepository;
@@ -256,4 +259,139 @@ public class PlantHeadServiceImpl implements PlantHeadService {
 
         return new ApiResponse<>(true, "Employees fetched successfully", response);
     }
+
+
+    @Override
+    @Transactional
+    public ApiResponse<Void> updateFactoryProductStock(UpdateStockRequestDto request) {
+        // ✅ 1. Get logged-in Plant Head
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User plantHead = userRepository.findByEmail(email);
+        if (plantHead == null) {
+            throw new RuntimeException("Plant Head not found");
+        }
+
+        // ✅ 2. Verify that the user is mapped to a factory
+        UserFactoryMapping mapping = userFactoryMappingRepository.findByUser(plantHead)
+                .orElseThrow(() -> new RuntimeException("Plant Head is not mapped to any factory"));
+        Factory factory = mapping.getFactory();
+
+        // ✅ 3. Validate Product
+        Product product = productRepository.findById(request.getProductId())
+                .orElseThrow(() -> new RuntimeException("Product not found"));
+
+        // ✅ 4. Find existing or create new stock record
+        FactoriesInventoryStock stock = factoriesInventoryStockRepository
+                .findByFactoryAndProduct(factory, product)
+                .orElse(new FactoriesInventoryStock(null,factory, product, 0, plantHead));
+
+        // ✅ 5. Update stock quantity
+        stock.setQty(stock.getQty() + request.getQuantityProduced());
+        stock.setAddedBy(plantHead);
+        factoriesInventoryStockRepository.save(stock);
+
+        // ✅ 6. Log production entry
+        FactoryProduction production = new FactoryProduction();
+        production.setFactory(factory);
+        production.setProduct(product);
+        production.setProducedQty(request.getQuantityProduced());
+
+        factoryProductionRepository.save(production);
+
+        return new ApiResponse<>(true, "Factory product stock updated successfully", null);
+    }
+    @Override
+    public ApiResponse<List<FactoryProductStockResponseDto>> getAllProductsWithStock() {
+        // ✅ 1. Get currently logged-in Plant Head
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User plantHead = userRepository.findByEmail(email);
+        if (plantHead == null) {
+            throw new RuntimeException("Plant Head not found");
+        }
+
+        // ✅ 2. Get factory assigned to plant head
+        UserFactoryMapping mapping = userFactoryMappingRepository.findByUser(plantHead)
+                .orElseThrow(() -> new RuntimeException("Plant Head is not mapped to any factory"));
+
+        Factory factory = mapping.getFactory();
+
+        // ✅ 3. Get all products from owner (assumed global)
+        List<Product> allProducts = productRepository.findAll();
+
+        // ✅ 4. Get stock entries for that factory
+        List<FactoriesInventoryStock> factoryStocks = factoriesInventoryStockRepository.findAllByFactory(factory);
+
+        // ✅ 5. Map Product + Stock
+        List<FactoryProductStockResponseDto> result = allProducts.stream().map(product -> {
+            Integer qty = factoryStocks.stream()
+                    .filter(s -> s.getProduct().getId().equals(product.getId()))
+                    .map(FactoriesInventoryStock::getQty)
+                    .findFirst()
+                    .orElse(0);
+
+            return new FactoryProductStockResponseDto(
+                    product.getId(),
+                    product.getName(),
+                    product.getCategory().getCategoryName(),
+                    product.getPrice(),
+                    product.getThreshold(),
+                    qty,
+                    product.getImage(),
+                    product.getRewardPts()
+            );
+        }).toList();
+
+        return new ApiResponse<>(true, "Products with factory stock fetched successfully", result);
+    }
+    @Override
+    public ApiResponse<List<FactoryProductStockResponseDto>> getLowStockProducts() {
+        // ✅ 1. Get logged-in Plant Head
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User plantHead = userRepository.findByEmail(email);
+        if (plantHead == null) {
+            throw new RuntimeException("Plant Head not found");
+        }
+
+        // ✅ 2. Verify mapping to factory
+        UserFactoryMapping mapping = userFactoryMappingRepository.findByUser(plantHead)
+                .orElseThrow(() -> new RuntimeException("Plant Head is not mapped to any factory"));
+        Factory factory = mapping.getFactory();
+
+        // ✅ 3. Get all global products (added by owner)
+        List<Product> allProducts = productRepository.findAll();
+
+        // ✅ 4. Get stock entries for that factory
+        List<FactoriesInventoryStock> factoryStocks = factoriesInventoryStockRepository.findAllByFactory(factory);
+
+        // ✅ 5. Combine both: calculate low stock products
+        List<FactoryProductStockResponseDto> lowStockProducts = allProducts.stream()
+                .map(product -> {
+                    // Try to find stock entry for this product
+                    FactoriesInventoryStock stock = factoryStocks.stream()
+                            .filter(s -> s.getProduct().getId().equals(product.getId()))
+                            .findFirst()
+                            .orElse(null);
+
+                    // Use 0 if no record exists
+                    int qty = (stock != null && stock.getQty() != null) ? stock.getQty() : 0;
+                    Long threshold = product.getThreshold();
+
+                    return new FactoryProductStockResponseDto(
+                            product.getId(),
+                            product.getName(),
+                            product.getCategory().getCategoryName(),
+                            product.getPrice(),
+                            threshold,
+                            qty,
+                            product.getImage(),
+                            product.getRewardPts()
+                    );
+                })
+                // ✅ Filter only those below or equal to threshold
+                .filter(dto -> dto.getThreshold() != null && dto.getCurrentQty() <= dto.getThreshold())
+                .collect(Collectors.toList());
+
+        return new ApiResponse<>(true, "Low stock products fetched successfully", lowStockProducts);
+    }
+
 }

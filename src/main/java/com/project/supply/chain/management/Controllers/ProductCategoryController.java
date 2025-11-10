@@ -3,9 +3,11 @@ package com.project.supply.chain.management.Controllers;
 import com.project.supply.chain.management.ServiceInterfaces.ProductCategoryService;
 import com.project.supply.chain.management.dto.ApiResponse;
 import com.project.supply.chain.management.dto.ProductCategoryDto;
+import com.project.supply.chain.management.dto.ProductCategoryResponseDto;
 import com.project.supply.chain.management.entity.ProductCategory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -31,12 +33,12 @@ public class ProductCategoryController {
         return ResponseEntity.ok(response);
     }
     @GetMapping("/get/categories")
-
-    public ResponseEntity<ApiResponse<List<ProductCategory>>> getAllCategories(
-            @RequestParam(defaultValue = "categoryName") String sortBy,
+    @PreAuthorize("hasAnyAuthority('OWNER', 'CENTRAL_OFFICE', 'PLANT_HEAD', 'DISTRIBUTOR')")
+    public ResponseEntity<ApiResponse<List<ProductCategoryResponseDto>>> getAllCategories(
+            @RequestParam(defaultValue = "id") String sortBy,
             @RequestParam(defaultValue = "asc") String sortDir
     ) {
-        ApiResponse<List<ProductCategory>> response = categoryService.getAllCategories(sortBy, sortDir);
+        ApiResponse<List<ProductCategoryResponseDto>> response = categoryService.getAllCategories(sortBy, sortDir);
         return ResponseEntity.ok(response);
     }
     @DeleteMapping("/delete/{categoryId}")

@@ -15,4 +15,7 @@ public interface PlantHeadService {
 ApiResponse<Page<UserResponseDto>> getEmployeesInFactory(
         String keyword, String role, int page, int size
 );
+        ApiResponse<Void> updateFactoryProductStock(UpdateStockRequestDto request);
+        ApiResponse<List<FactoryProductStockResponseDto>> getAllProductsWithStock();
+        ApiResponse<List<FactoryProductStockResponseDto>> getLowStockProducts();
 }

@@ -2,6 +2,7 @@ package com.project.supply.chain.management.ServiceImplementations;
 
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
+import com.project.supply.chain.management.Repositories.FactoryProductionRepository;
 import com.project.supply.chain.management.Repositories.UserRepository;
 import com.project.supply.chain.management.ServiceInterfaces.UserService;
 import com.project.supply.chain.management.constants.Role;
@@ -16,12 +17,14 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -141,18 +144,27 @@ true,
 
 
     @Override
-    public ImageResponseDto uploadProfileImage(Long userId, MultipartFile file) throws IOException {
+    public ImageResponseDto uploadProfileImage(MultipartFile file) throws IOException {
+        // ✅ Extract email from JWT (Spring Security context)
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
 
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+        User user = userRepository.findByEmail(email);
+        if (user == null) {
+            throw new RuntimeException("User not found for email: " + email);
+        }
 
+        // ✅ Upload image to Cloudinary
         String imageUrl = cloudinaryService.uploadImage(file);
 
+        // ✅ Save new image URL in DB
         user.setImg(imageUrl);
         userRepository.save(user);
 
         return new ImageResponseDto(imageUrl, "Profile image uploaded successfully");
     }
+
+
+
 
 }
 

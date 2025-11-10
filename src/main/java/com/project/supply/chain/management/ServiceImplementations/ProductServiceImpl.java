@@ -1,18 +1,12 @@
 package com.project.supply.chain.management.ServiceImplementations;
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
-import com.project.supply.chain.management.Repositories.ProductCategoryRepository;
-import com.project.supply.chain.management.Repositories.ProductRepository;
-import com.project.supply.chain.management.Repositories.UserRepository;
+import com.project.supply.chain.management.Repositories.*;
 import com.project.supply.chain.management.ServiceInterfaces.ProductService;
 import com.project.supply.chain.management.constants.Account_Status;
 import com.project.supply.chain.management.constants.Role;
-import com.project.supply.chain.management.dto.AddProductDto;
-import com.project.supply.chain.management.dto.ApiResponse;
-import com.project.supply.chain.management.dto.ProductResponseDto;
-import com.project.supply.chain.management.entity.Product;
-import com.project.supply.chain.management.entity.ProductCategory;
-import com.project.supply.chain.management.entity.User;
+import com.project.supply.chain.management.dto.*;
+import com.project.supply.chain.management.entity.*;
 import com.project.supply.chain.management.specifications.ProductSpecifications;
 import com.project.supply.chain.management.util.CloudinaryConfig;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,11 +20,15 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class ProductServiceImpl implements ProductService {
+
 
     @Autowired
     private ProductRepository productRepository;
@@ -38,38 +36,59 @@ public class ProductServiceImpl implements ProductService {
     private ProductCategoryRepository categoryRepository;
 @Autowired
     CloudinaryConfig cloudinaryConfig;
-
+@Autowired
+FactoryInventoryStockRepository factoryInventoryStockRepository;
 @Autowired
     UserRepository userRepository;
+@Autowired
+UserFactoryMappingRepository userFactoryMappingRepository;
 
     @Override
     public ApiResponse<ProductResponseDto> uploadProductWithImage(AddProductDto productDto, MultipartFile imageFile) {
         try {
-            Cloudinary cloudinary = cloudinaryConfig.cloudinary();
+            // 🚫 Step 1: Check for duplicate product name
+            Optional<Product> existingProduct = productRepository.findByNameIgnoreCase(productDto.getName());
+            if (existingProduct.isPresent()) {
+                return new ApiResponse<>(false,
+                        "A product with this name already exists: " + productDto.getName(),
+                        null);
+            }
 
+            // ✅ Step 2: Upload image to Cloudinary
+            Cloudinary cloudinary = cloudinaryConfig.cloudinary();
             Map uploadResult = cloudinary.uploader().upload(imageFile.getBytes(),
                     ObjectUtils.asMap("folder", "products"));
-
             String imageUrl = (String) uploadResult.get("secure_url");
 
+            // ✅ Step 3: Get category
             ProductCategory category = categoryRepository.findById(productDto.getCategoryId())
                     .orElseThrow(() -> new RuntimeException("Category not found"));
 
+            // ✅ Step 4: Create and save product
             Product product = new Product();
-            product.setName(productDto.getName());
+            product.setName(productDto.getName().trim());
             product.setProdDescription(productDto.getProdDescription());
             product.setPrice(productDto.getPrice());
             product.setRewardPts(productDto.getRewardPts());
             product.setCategory(category);
+            product.setThreshold(productDto.getThreshold());
             product.setImage(imageUrl);
+            product.setIsActive(Account_Status.ACTIVE);
 
             Product savedProduct = productRepository.save(product);
-            ProductResponseDto responseDto= new ProductResponseDto
-                    (savedProduct.getId(),
+
+            // ✅ Step 5: Prepare response DTO
+            ProductResponseDto responseDto = new ProductResponseDto(
+                    savedProduct.getId(),
                     savedProduct.getName(),
-                            savedProduct.getProdDescription(),
-                            savedProduct.getPrice(),savedProduct.getRewardPts()
-            ,savedProduct.getCategory().getCategoryName(),savedProduct.getImage(),savedProduct.getIsActive());
+                    savedProduct.getProdDescription(),
+                    savedProduct.getPrice(),
+                    savedProduct.getRewardPts(),
+                    savedProduct.getCategory().getCategoryName(),
+                    savedProduct.getThreshold(),
+                    savedProduct.getImage(),
+                    savedProduct.getIsActive()
+            );
 
             return new ApiResponse<>(true, "Product uploaded successfully", responseDto);
         } catch (IOException e) {
@@ -78,14 +97,15 @@ public class ProductServiceImpl implements ProductService {
             return new ApiResponse<>(false, "Error uploading product: " + e.getMessage(), null);
         }
     }
+
     @Override
     public ApiResponse<Page<ProductResponseDto>> getAllProducts(int page, int size, String search, String categoryName) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("id").descending());
 
-        // Start with an "empty" Specification
-        Specification<Product> spec = (root, query, cb) -> cb.conjunction();
+        // Start with an "empty" Specification and include only active products
+        Specification<Product> spec = (root, query, cb) -> cb.equal(root.get("isActive"), Account_Status.ACTIVE);
 
-        // Dynamically combine specifications
+        // Dynamically combine additional filters
         if (search != null && !search.isBlank()) {
             spec = spec.and(ProductSpecifications.searchProducts(search));
         }
@@ -105,11 +125,13 @@ public class ProductServiceImpl implements ProductService {
             dto.setCategoryName(product.getCategory().getCategoryName());
             dto.setImageUrl(product.getImage());
             dto.setIsActive(product.getIsActive());
+            dto.setThreshold(product.getThreshold());
             return dto;
         });
 
-        return new ApiResponse<>(true, "Products fetched successfully", dtoPage);
+        return new ApiResponse<>(true, "Active products fetched successfully", dtoPage);
     }
+
 
     @Override
     public ApiResponse<String> softDeleteProduct(Long productId) {
@@ -131,5 +153,50 @@ public class ProductServiceImpl implements ProductService {
         productRepository.save(product);
         return new ApiResponse<>(true, "Product marked as IN_ACTIVE successfully", "Product id : " + productId);
     }
+
+    @Override
+    public ApiResponse<ProductResponseDto> updateProduct(Long id, AddProductDto productDto, MultipartFile imageFile) throws Exception {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Product not found"));
+
+        // ✅ If category is updated
+        if (productDto.getCategoryId() != null) {
+            ProductCategory category = categoryRepository.findById(productDto.getCategoryId())
+                    .orElseThrow(() -> new RuntimeException("Category not found"));
+            product.setCategory(category);
+        }
+
+        // ✅ Update basic fields
+        if (productDto.getName() != null && !productDto.getName().isBlank()) product.setName(productDto.getName());
+        if (productDto.getProdDescription() != null) product.setProdDescription(productDto.getProdDescription());
+        if (productDto.getPrice() != null) product.setPrice(productDto.getPrice());
+        if (productDto.getRewardPts() != null) product.setRewardPts(productDto.getRewardPts());
+        if (productDto.getThreshold() != null) product.setThreshold(productDto.getThreshold());
+
+        // ✅ If new image provided, upload to Cloudinary
+        if (imageFile != null && !imageFile.isEmpty()) {
+            Cloudinary cloudinary = cloudinaryConfig.cloudinary();
+            Map uploadResult = cloudinary.uploader().upload(imageFile.getBytes(),
+                    ObjectUtils.asMap("folder", "products"));
+            product.setImage((String) uploadResult.get("secure_url"));
+        }
+
+        productRepository.save(product);
+
+        ProductResponseDto dto = new ProductResponseDto(
+                product.getId(),
+                product.getName(),
+                product.getProdDescription(),
+                product.getPrice(),
+                product.getRewardPts(),
+                product.getCategory().getCategoryName(),
+                product.getThreshold(),
+                product.getImage(),
+                product.getIsActive()
+        );
+
+        return new ApiResponse<>(true, "Product updated successfully", dto);
+    }
+
 
 }

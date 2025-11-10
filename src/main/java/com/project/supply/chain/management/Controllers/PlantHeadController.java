@@ -5,6 +5,7 @@ import com.project.supply.chain.management.dto.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -45,4 +46,26 @@ public class PlantHeadController {
     ) {
         return plantHeadService.getEmployeesInFactory(keyword, roleStr, page, size);
     }
+
+    @PostMapping("/factory/update-stock")
+    @PreAuthorize("hasAuthority('PLANT_HEAD')")
+    public ResponseEntity<ApiResponse<Void>> updateFactoryStock(@RequestBody UpdateStockRequestDto request) {
+        ApiResponse<Void> response = plantHeadService.updateFactoryProductStock(request);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/factory/products")
+    @PreAuthorize("hasAuthority('PLANT_HEAD')")
+    public ResponseEntity<ApiResponse<List<FactoryProductStockResponseDto>>> getAllProductsWithStock() {
+        ApiResponse<List<FactoryProductStockResponseDto>> response = plantHeadService.getAllProductsWithStock();
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/low-stock")
+    @PreAuthorize("hasAuthority('PLANT_HEAD')")
+    public ResponseEntity<ApiResponse<List<FactoryProductStockResponseDto>>> getLowStockProducts() {
+        ApiResponse<List<FactoryProductStockResponseDto>> response = plantHeadService.getLowStockProducts();
+        return ResponseEntity.ok(response);
+    }
+
 }

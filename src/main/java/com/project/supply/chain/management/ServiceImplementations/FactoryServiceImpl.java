@@ -1,14 +1,12 @@
 package com.project.supply.chain.management.ServiceImplementations;
-import com.project.supply.chain.management.Repositories.CentralOfficeRepository;
-import com.project.supply.chain.management.Repositories.FactoryRepository;
-import com.project.supply.chain.management.Repositories.UserFactoryMappingRepository;
-import com.project.supply.chain.management.Repositories.UserRepository;
+import com.project.supply.chain.management.Repositories.*;
 import com.project.supply.chain.management.ServiceInterfaces.FactoryService;
 import com.project.supply.chain.management.constants.Account_Status;
 import com.project.supply.chain.management.constants.Role;
 import com.project.supply.chain.management.dto.AddEmployeeDto;
 import com.project.supply.chain.management.dto.ApiResponse;
 import com.project.supply.chain.management.dto.FactoryDto;
+import com.project.supply.chain.management.dto.FactoryProductionSummaryDto;
 import com.project.supply.chain.management.entity.Factory;
 import com.project.supply.chain.management.entity.User;
 import com.project.supply.chain.management.entity.UserFactoryMapping;
@@ -38,6 +36,8 @@ public class FactoryServiceImpl implements FactoryService {
     @Autowired
     UserFactoryMappingRepository userFactoryMappingRepository;
 
+    @Autowired
+    FactoryProductionRepository factoryProductionRepository;
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     @Override
@@ -207,6 +207,16 @@ if(factory.getIsActive()!= Account_Status.ACTIVE)
         factoryRepository.save(factory);
 
         return new ApiResponse<>(true, "Factory status updated to IN_ACTIVE", null);
+    }
+    @Override
+    public ApiResponse<List<FactoryProductionSummaryDto>> getFactoryProductionSummary() {
+        List<FactoryProductionSummaryDto> summaries = factoryProductionRepository.getFactoryProductionSummary();
+
+        return new ApiResponse<>(
+                true,
+                "Production summary fetched successfully",
+                summaries
+        );
     }
 }
 
