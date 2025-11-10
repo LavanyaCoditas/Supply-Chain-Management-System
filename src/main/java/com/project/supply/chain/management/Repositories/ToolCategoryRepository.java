@@ -8,4 +8,5 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface ToolCategoryRepository extends JpaRepository<ToolCategory, Long> {
     // Additional custom queries if needed
+    boolean existsByNameIgnoreCase(String name);
 }

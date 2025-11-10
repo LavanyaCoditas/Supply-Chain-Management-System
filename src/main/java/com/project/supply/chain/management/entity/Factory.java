@@ -39,6 +39,9 @@ public class Factory {
 
     @OneToMany(mappedBy = "factory")
     private List<StorageArea> storageAreas;
+
+    @OneToMany(mappedBy = "factory")
+    private List<ToolStorageMapping> toolStorageMappings;
 }
 
 

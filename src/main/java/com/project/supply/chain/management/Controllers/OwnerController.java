@@ -1,9 +1,6 @@
 package com.project.supply.chain.management.Controllers;
 
-import com.project.supply.chain.management.ServiceInterfaces.CentralOfficeService;
-import com.project.supply.chain.management.ServiceInterfaces.FactoryService;
-import com.project.supply.chain.management.ServiceInterfaces.MerchandiseService;
-import com.project.supply.chain.management.ServiceInterfaces.UserService;
+import com.project.supply.chain.management.ServiceInterfaces.*;
 import com.project.supply.chain.management.dto.*;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +30,8 @@ public class OwnerController
 
     @Autowired
     MerchandiseService merchandiseService;
+    @Autowired
+    ToolCategoryService toolCategoryService;
 
 
     @PostMapping("/create/factory")
@@ -170,6 +169,42 @@ public ResponseEntity<ApiResponse<Void>> createFactory(@RequestBody FactoryDto f
 
 
     //Tools
+
+    //category of tools
+    @PostMapping("/tools/add/category")
+    @PreAuthorize("hasAnyAuthority('OWNER', 'PLANT_HEAD')")
+    public ResponseEntity<ApiResponse<ToolCategoryDto>> createToolCategory(
+            @RequestBody AddToolCategoryDto dto
+    ) {
+        ApiResponse<ToolCategoryDto> response = toolCategoryService.addToolCategory(dto);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/tools/get/categories")
+    @PreAuthorize("hasAnyAuthority('OWNER', 'PLANT_HEAD', 'CHIEF_SUPERVISOR')")
+    public ResponseEntity<ApiResponse<List<ToolCategoryDto>>> getAllToolCategories() {
+        ApiResponse<List<ToolCategoryDto>> response = toolCategoryService.getAllToolCategories();
+        return ResponseEntity.ok(response);
+    }
+
+    @PutMapping("tool-category/update/{id}")
+    @PreAuthorize("hasAnyAuthority('OWNER', 'PLANT_HEAD')")
+    public ResponseEntity<ApiResponse<ToolCategoryDto>> updateToolCategory(
+            @PathVariable Long id,
+            @RequestBody AddToolCategoryDto dto
+    ) {
+        ApiResponse<ToolCategoryDto> response = toolCategoryService.updateToolCategory(id, dto);
+        return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("tool-category/delete/{id}")
+    @PreAuthorize("hasAnyAuthority('OWNER', 'PLANT_HEAD')")
+    public ResponseEntity<ApiResponse<Void>> deleteToolCategory(@PathVariable Long id) {
+        ApiResponse<Void> response = toolCategoryService.deleteToolCategory(id);
+        return ResponseEntity.ok(response);
+    }
+
+
 
 
 }

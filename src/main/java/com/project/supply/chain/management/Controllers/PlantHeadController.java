@@ -17,13 +17,14 @@ public class PlantHeadController {
     @Autowired
     PlantHeadService plantHeadService;
     //Create a Bay for factory
-    @PostMapping("/bays")
-    public ApiResponse<String> createBay(
-            @RequestParam("plantHeadId") Long plantHeadId,
-            @RequestBody BayRequestDto request) {
-
-      return plantHeadService.createBay(plantHeadId, request);
-
+    @PostMapping("/create/{plantHeadId}")
+    @PreAuthorize("hasAuthority('PLANT_HEAD')")
+    public ResponseEntity<ApiResponse<String>> createBay(
+            @PathVariable Long plantHeadId,
+            @RequestBody BayRequestDto request
+    ) {
+        ApiResponse<String> response = plantHeadService.createBay(plantHeadId, request);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/get/bays")

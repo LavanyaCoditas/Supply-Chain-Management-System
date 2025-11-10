@@ -19,7 +19,8 @@ public class Tool {
 
     private String name;
 
-    @ManyToOne @JoinColumn(name = "category_id")
+    @ManyToOne
+    @JoinColumn(name = "category_id")
     private ToolCategory category;
 
     private String imageUrl;
@@ -36,5 +37,7 @@ public class Tool {
     private Account_Status isActive ;
     private LocalDateTime createdAt = LocalDateTime.now();
     private LocalDateTime updatedAt = LocalDateTime.now();
+
+
 }
 

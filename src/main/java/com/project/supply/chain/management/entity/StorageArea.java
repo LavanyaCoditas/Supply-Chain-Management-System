@@ -3,6 +3,8 @@ package com.project.supply.chain.management.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.List;
+
 @Entity
 @Table(name = "storage_area")
 @Data
@@ -18,6 +20,9 @@ public class StorageArea {
 
     @ManyToOne @JoinColumn(name = "tool_id")
     private Tool tool;
+
+    @OneToMany(mappedBy = "storageArea", cascade = CascadeType.ALL)
+    private List<ToolStorageMapping> toolStorageMappings;
 
     private Integer rowNum;
     private Integer colNum;

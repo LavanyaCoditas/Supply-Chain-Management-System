@@ -58,27 +58,36 @@ public class PlantHeadServiceImpl implements PlantHeadService {
     @Override
     @Transactional
     public ApiResponse<String> createBay(Long plantHeadId, BayRequestDto request) {
-        // 1️⃣ Fetch the Plant Head user
+        // 1️⃣ Validate Plant Head existence
         User plantHead = userRepository.findById(plantHeadId)
                 .orElseThrow(() -> new RuntimeException("Plant Head not found"));
 
-        // 2️⃣ Check if the Plant Head is mapped to a factory
-        UserFactoryMapping mapping = userFactoryMappingRepository.findByUser(plantHead)
-                .orElseThrow(() -> new RuntimeException("Plant Head is not mapped to any factory"));
+        // 2️⃣ Ensure Plant Head is actually assigned to a factory
+        Optional<UserFactoryMapping> optionalMapping = userFactoryMappingRepository.findByUser(plantHead);
+        if (optionalMapping.isEmpty() || optionalMapping.get().getFactory() == null) {
+            throw new RuntimeException("Bay cannot be created — Plant Head is not mapped to any factory");
+        }
 
-        Factory factory = mapping.getFactory();
+        Factory factory = optionalMapping.get().getFactory();
 
-        // 3️⃣ Create a new Bay for this factory
+        // 3️⃣ Validate that bay name doesn’t already exist in the same factory
+        boolean exists = bayRepository.existsByNameAndFactory(request.getBayName(), factory);
+        if (exists) {
+            throw new RuntimeException("A bay with this name already exists in the factory");
+        }
+
+        // 4️⃣ Create new bay only if all checks pass
         Bay bay = new Bay();
         bay.setName(request.getBayName());
-        System.out.println("+++++++++++++" + bay.getName());
         bay.setFactory(factory);
         bay.setCreatedAt(LocalDateTime.now());
         bay.setUpdatedAt(LocalDateTime.now());
+
         bayRepository.save(bay);
 
-        return new ApiResponse<String>(true, "bay created successfully", bay.getName());
+        return new ApiResponse<>(true, "Bay created successfully for factory: " + factory.getName(), bay.getName());
     }
+
 
 
     @Override

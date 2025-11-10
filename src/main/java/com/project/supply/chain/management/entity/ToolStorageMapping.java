@@ -13,17 +13,17 @@ public class ToolStorageMapping {
     private Long id;
 
     @ManyToOne
-//    @MapsId("factoryId")
+
     @JoinColumn(name = "factory_id")
     private Factory factory;
 
     @ManyToOne
-//    @MapsId("toolId")
+
     @JoinColumn(name = "tool_id")
     private Tool tool;
 
     @ManyToOne
-//    @MapsId("storageAreaId")
+
     @JoinColumn(name = "storage_area_id")
     private StorageArea storageArea;
 
