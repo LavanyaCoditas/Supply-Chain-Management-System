@@ -308,32 +308,7 @@ public class UserController {
     }
 
     // CReate ToolS CRUD
-    @PostMapping("/create/tools")
-    @PreAuthorize("hasAnyAuthority('OWNER','PLANT_HEAD')")
-    public ResponseEntity<ApiResponse<ToolResponseDto>> createTool(@RequestBody AddNewToolDto dto) throws IOException {
-        ApiResponse<ToolResponseDto> response = toolService.createTool(dto);
-        return ResponseEntity.ok(response);
-    }
 
-    //STORAGE CRUD
-
-
-    @PostMapping("/create/storage-area")
-    @PreAuthorize("hasAuthority('PLANT_HEAD')")
-    public ResponseEntity<ApiResponse<String>> createStorageArea(@RequestBody CreateStorageAreaDto dto) {
-        ApiResponse<String> response = toolService.createStorageArea(dto);
-        return ResponseEntity.ok(response);
-    }
-    @GetMapping("/get/storage-areas")
-    @PreAuthorize("hasAnyAuthority('PLANT_HEAD', 'CHIEF_SUPERVISOR')")
-    public ApiResponse<List<StorageAreaResponseDto>> getAllStorageAreas() {
-        return toolService.getAllStorageAreasForPlantHead();
-    }
-    @PostMapping("/factory/get-tool")
-    public ResponseEntity<ApiResponse<ToolResponseDto>> assignToolToFactory(
-            @RequestBody AssignToolToFactoryDto dto) {
-        return ResponseEntity.ok(toolService.assignToolToFactory(dto));
-    }
 
 
 
