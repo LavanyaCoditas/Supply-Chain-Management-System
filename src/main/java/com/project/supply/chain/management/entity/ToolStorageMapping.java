@@ -3,6 +3,7 @@ package com.project.supply.chain.management.entity;
 import jakarta.persistence.*;
         import lombok.*;
         import java.time.Instant;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "tool_storage_mapping")
@@ -23,9 +24,8 @@ public class ToolStorageMapping {
     private Tool tool;
 
     @ManyToOne
-
     @JoinColumn(name = "storage_area_id")
     private StorageArea storageArea;
 
-    private Instant assignedAt = Instant.now();
+    private LocalDateTime createdAt ;
 }

@@ -127,7 +127,8 @@ public class PlantHeadServiceImpl implements PlantHeadService {
 
 
     @Override
-    public ApiResponse<UserResponseDto> createEmployeeForCurrentPlantHead(EmployeeRequestDto request) {
+    public ApiResponse<UserResponseDto> createEmployeeForCurrentPlantHead(EmployeeRequestDto request)
+    {
 
         // 1️⃣ Get logged-in Plant Head
         String loggedInEmail = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -149,16 +150,25 @@ public class PlantHeadServiceImpl implements PlantHeadService {
             }
         }
 
-        // 4️⃣ Create user
+        // 4️⃣ Check for duplicate email
+        if (userRepository.findByEmail(request.getEmail()) != null) {
+            throw new RuntimeException("User with this email already exists");
+        }
+
+        // 5️⃣ Create new user
         User newUser = new User();
         newUser.setUsername(request.getName());
         newUser.setEmail(request.getEmail());
         newUser.setPassword(passwordEncoder.encode("12345678"));
         newUser.setRole(request.getRole());
         newUser.setIsActive(Account_Status.ACTIVE);
+
+        // Optional: add image if sent in request
+
+
         userRepository.save(newUser);
 
-        // 5️⃣ Create mapping
+        // 6️⃣ Create mapping for the new employee
         UserFactoryMapping employeeMapping = new UserFactoryMapping();
         employeeMapping.setUser(newUser);
         employeeMapping.setFactory(factory);
@@ -178,25 +188,27 @@ public class PlantHeadServiceImpl implements PlantHeadService {
 
         userFactoryMappingRepository.save(employeeMapping);
 
-        // 6️⃣ Send email
+        // 7️⃣ Send email
         sendEmailToEmployee(newUser, factory, request.getRole(), bay);
 
-        // 7️⃣ Create response DTO
+        // 8️⃣ Build response DTO
         UserResponseDto responseDto = new UserResponseDto(
                 newUser.getId(),
                 newUser.getUsername(),
                 newUser.getEmail(),
                 newUser.getRole().name(),
                 factory.getName(),
-                bay != null ? bay.getName() : null
+                bay != null ? bay.getName() : null,
+                newUser.getImg() // ✅ Added image to response
         );
 
         return new ApiResponse<>(
                 true,
-                "Mail sent to " + request.getRole().name(),
+                "Employee (" + request.getRole().name() + ") created and email sent successfully",
                 responseDto
         );
     }
+
 
     private void sendEmailToEmployee(User user, Factory factory, Role role, Bay bay) {
         String subject = "Welcome to " + factory.getName();
@@ -222,7 +234,7 @@ public class PlantHeadServiceImpl implements PlantHeadService {
     public ApiResponse<Page<UserResponseDto>> getEmployeesInFactory(
             String keyword, String roleStr, int page, int size
     ) {
-        // ✅ 1. Get currently logged-in user (Plant Head)
+        // ✅ 1. Get logged-in Plant Head
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         User plantHead = userRepository.findByEmail(email);
         if (plantHead == null) {
@@ -234,7 +246,7 @@ public class PlantHeadServiceImpl implements PlantHeadService {
                 .map(UserFactoryMapping::getFactory)
                 .orElseThrow(() -> new RuntimeException("Plant Head is not mapped to any factory"));
 
-        // ✅ 3. Parse role filter if provided
+        // ✅ 3. Parse role filter (optional)
         Role role = null;
         if (roleStr != null && !roleStr.isBlank()) {
             try {
@@ -244,7 +256,7 @@ public class PlantHeadServiceImpl implements PlantHeadService {
             }
         }
 
-        // ✅ 4. Build dynamic specifications (no .where() used)
+        // ✅ 4. Build dynamic specification
         Specification<UserFactoryMapping> spec = Specification.allOf(
                 EmployeeSpecifications.belongsToFactory(factory),
                 EmployeeSpecifications.hasRole(role),
@@ -253,21 +265,26 @@ public class PlantHeadServiceImpl implements PlantHeadService {
 
         Pageable pageable = PageRequest.of(page, size, Sort.by("user.username").ascending());
 
-        // ✅ 5. Fetch paginated data
+        // ✅ 5. Fetch paginated employee data
         Page<UserFactoryMapping> mappings = userFactoryMappingRepository.findAll(spec, pageable);
 
-        // ✅ 6. Map to DTO
-        Page<UserResponseDto> response = mappings.map(m -> new UserResponseDto(
-                m.getUser().getId(),
-                m.getUser().getUsername(),
-                m.getUser().getEmail(),
-                m.getAssignedRole() != null ? m.getAssignedRole().toString() : "N/A",
-                m.getFactory() != null ? m.getFactory().getName() : null,
-                (m.getBayId() != null) ? m.getBayId().getName() : null
-        ));
+        // ✅ 6. Map entity -> DTO (now includes image)
+        Page<UserResponseDto> response = mappings.map(mapping -> {
+            User user = mapping.getUser();
+            return new UserResponseDto(
+                    user.getId(),
+                    user.getUsername(),
+                    user.getEmail(),
+                    mapping.getAssignedRole() != null ? mapping.getAssignedRole().toString() : "N/A",
+                    mapping.getFactory() != null ? mapping.getFactory().getName() : null,
+                    mapping.getBayId() != null ? mapping.getBayId().getName() : null,
+                    user.getImg() != null ? user.getImg() : null // ✅ add image here
+            );
+        });
 
         return new ApiResponse<>(true, "Employees fetched successfully", response);
     }
+
 
 
     @Override

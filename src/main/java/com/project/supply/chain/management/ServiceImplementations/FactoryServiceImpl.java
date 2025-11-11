@@ -42,11 +42,15 @@ public class FactoryServiceImpl implements FactoryService {
 
     @Override
     @Transactional
+
     public ApiResponse<Void> createFactory(FactoryDto dto) {
+
+        // Step 1️⃣: Validate plant head email
         if (dto.getPlantHeadEmail() == null || dto.getPlantHeadEmail().isBlank()) {
             return new ApiResponse<>(false, "Plant head email is required", null);
         }
 
+        // Step 2️⃣: Check if user exists
         User existingUser = userRepository.findByEmail(dto.getPlantHeadEmail());
         if (existingUser == null) {
             return new ApiResponse<>(false,
@@ -54,30 +58,41 @@ public class FactoryServiceImpl implements FactoryService {
                     null);
         }
 
+        // Step 3️⃣: Verify user role is PLANT_HEAD
         if (existingUser.getRole() != Role.PLANT_HEAD) {
             return new ApiResponse<>(false,
                     "User exists but is not a Plant Head. Please assign correct role or create new Plant Head.",
                     null);
         }
 
+        // Step 4️⃣: Check if this Plant Head is already mapped to another factory
+        boolean isAlreadyAssigned = userFactoryMappingRepository.existsByUser(existingUser);
+        if (isAlreadyAssigned) {
+            return new ApiResponse<>(false,
+                    "This Plant Head is already assigned to another factory.",
+                    null);
+        }
+
+        // Step 5️⃣: Create factory entity
         Factory factory = new Factory();
         factory.setName(dto.getName());
         factory.setCity(dto.getCity());
         factory.setAddress(dto.getAddress());
         factory.setPlanthead(existingUser);
         factory.setIsActive(Account_Status.ACTIVE);
-        //factory.setCentralOffice();
         factoryRepository.save(factory);
 
+        // Step 6️⃣: Create factory-user mapping
         UserFactoryMapping mapping = new UserFactoryMapping();
         mapping.setUser(existingUser);
         mapping.setFactory(factory);
         userFactoryMappingRepository.save(mapping);
 
-        return new ApiResponse<>(true, "Factory created successfully", null);
+        return new ApiResponse<>(true, "Factory created successfully and assigned to Plant Head", null);
     }
 
-@Override
+
+    @Override
 @Transactional
 public ApiResponse<Void> createEmployeeAsPlantHead(AddEmployeeDto dto) {
 

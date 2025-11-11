@@ -19,7 +19,6 @@ public class ProductCategoryController {
     @Autowired
     ProductCategoryService categoryService;
 
-
     @PostMapping("/create")
     public ApiResponse<Void> createProductCategory(@RequestBody ProductCategoryDto productCategoryDto) {
         return categoryService.createProductCategory(productCategoryDto);

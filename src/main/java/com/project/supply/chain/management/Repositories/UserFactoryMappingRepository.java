@@ -15,6 +15,7 @@ public interface UserFactoryMappingRepository extends JpaRepository<UserFactoryM
     Optional<UserFactoryMapping> findByUser(User user);
     // Find mapping by user (used for plant head)
 
+    boolean existsByUser(User user);
 
     // Check if a Chief Supervisor already exists for a factory
     boolean existsByFactoryAndAssignedRole(Factory factory, Role assignedRole);

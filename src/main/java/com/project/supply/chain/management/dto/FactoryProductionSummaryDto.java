@@ -13,5 +13,9 @@ public class FactoryProductionSummaryDto {
     private String factoryName;
     private Long totalProducts;
     private Long totalProduction;
-//    private LocalDateTime lastUpdated;
+    //tools
+    //employees
+    //plant head details
+    //location of factory
+
 }

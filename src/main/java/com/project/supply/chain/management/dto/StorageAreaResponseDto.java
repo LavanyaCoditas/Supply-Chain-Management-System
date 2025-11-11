@@ -7,12 +7,11 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserResponseDto {
+public class StorageAreaResponseDto {
     private Long id;
-    private String name;
-    private String email;
-    private String role;
+    private String bucket;
+    private Integer rowNum;
+    private Integer colNum;
+    private Integer stack;
     private String factoryName;
-    private String bayName;
-    private String  img;// null for Chief Supervisor
 }

@@ -27,6 +27,6 @@ public class StorageArea {
     private Integer rowNum;
     private Integer colNum;
     private Integer stack;
-    private Integer bucket;
+    private String bucket;
 
 }

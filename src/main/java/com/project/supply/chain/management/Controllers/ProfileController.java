@@ -18,25 +18,8 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/profile/users")
 public class ProfileController {
-    @Autowired
-    private UserService userService;
 
-    @GetMapping("/get/profile")
-    public ResponseEntity<ApiResponse<ProfileResponseDto>> getProfile() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String currentUserEmail = authentication.getName(); // email extracted from token
 
-        ApiResponse<ProfileResponseDto> response = userService.getProfile(currentUserEmail);
-        return ResponseEntity.ok(response);
-    }
 
-    @PostMapping("/upload-image")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<ImageResponseDto> uploadProfileImage(
-            @RequestParam("image") MultipartFile image
-    ) throws Exception {
-        ImageResponseDto response = userService.uploadProfileImage(image);
-        return ResponseEntity.ok(response);
-    }
 
 }
