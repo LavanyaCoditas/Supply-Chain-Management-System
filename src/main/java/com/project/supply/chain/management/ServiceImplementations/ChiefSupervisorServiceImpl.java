@@ -41,7 +41,7 @@ public class ChiefSupervisorServiceImpl implements CheifSupervisorService {
     private UserFactoryMappingRepository userFactoryMappingRepository;
 
     @Override
-    public ApiResponse<WorkerResponseDto> addWorker(AddEmployeeDto dto) {
+    public ApiResponseDto<WorkerResponseDto> addWorker(AddEmployeeDto dto) {
         String supervisorEmail = SecurityContextHolder.getContext().getAuthentication().getName();
         User supervisor = userRepository.findByEmail(supervisorEmail);
         if (supervisor == null) {
@@ -50,7 +50,7 @@ public class ChiefSupervisorServiceImpl implements CheifSupervisorService {
 
         // ✅ Check duplicate email
         if (userRepository.findByEmail(dto.getEmail()) != null) {
-            return new ApiResponse<>(false, "User with this email already exists", null);
+            return new ApiResponseDto<>(false, "User with this email already exists", null);
         }
 
         // ✅ Get supervisor’s mapping
@@ -134,13 +134,13 @@ public class ChiefSupervisorServiceImpl implements CheifSupervisorService {
 
         emailService.sendEmail(dto.getEmail(), subject, body);
 
-        return new ApiResponse<>(true, "Worker added successfully and email sent", response);
+        return new ApiResponseDto<>(true, "Worker added successfully and email sent", response);
     }
 
 
 
     @Override
-    public ApiResponse<WorkerResponseDto> updateWorker(Long workerId, UpdateEmployeeDto dto) {
+    public ApiResponseDto<WorkerResponseDto> updateWorker(Long workerId, UpdateEmployeeDto dto) {
         User worker = userRepository.findById(workerId)
                 .orElseThrow(() -> new RuntimeException("Worker not found"));
 
@@ -162,11 +162,11 @@ public class ChiefSupervisorServiceImpl implements CheifSupervisorService {
                 mapping != null && mapping.getBayId() .getName()!= null ? mapping.getBayId().getName() : null
         );
 
-        return new ApiResponse<>(true, "Worker updated successfully", response);
+        return new ApiResponseDto<>(true, "Worker updated successfully", response);
     }
 
     @Override
-    public ApiResponse<Void> softDeleteWorker(Long workerId) {
+    public ApiResponseDto<Void> softDeleteWorker(Long workerId) {
         // ✅ Get logged-in supervisor
         String supervisorEmail = SecurityContextHolder.getContext().getAuthentication().getName();
         User supervisor = userRepository.findByEmail(supervisorEmail);
@@ -227,12 +227,12 @@ public class ChiefSupervisorServiceImpl implements CheifSupervisorService {
         // ✅ Send Email
         emailService.sendEmail(worker.getEmail(), subject, body);
 
-        return new ApiResponse<>(true, "Worker deleted successfully and email sent", null);
+        return new ApiResponseDto<>(true, "Worker deleted successfully and email sent", null);
     }
 
 
     @Override
-    public ApiResponse<Page<WorkerResponseDto>> searchWorkers(
+    public ApiResponseDto<Page<WorkerResponseDto>> searchWorkers(
             String name, String factoryName, String bayName, int page, int size) {
 
         Pageable pageable = PageRequest.of(page, size, Sort.by("id").descending());
@@ -264,7 +264,7 @@ public class ChiefSupervisorServiceImpl implements CheifSupervisorService {
         });
 
 
-        return new ApiResponse<>(true, "Workers fetched successfully", dtoPage);
+        return new ApiResponseDto<>(true, "Workers fetched successfully", dtoPage);
     }
 }
 

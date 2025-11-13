@@ -3,6 +3,7 @@ package com.project.supply.chain.management.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
@@ -28,5 +29,7 @@ public class StorageArea {
     private Integer colNum;
     private Integer stack;
     private String bucket;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 
 }

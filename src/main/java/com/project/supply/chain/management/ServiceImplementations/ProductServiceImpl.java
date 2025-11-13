@@ -20,11 +20,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
-import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 public class ProductServiceImpl implements ProductService {
@@ -44,12 +41,12 @@ FactoryInventoryStockRepository factoryInventoryStockRepository;
 UserFactoryMappingRepository userFactoryMappingRepository;
 
     @Override
-    public ApiResponse<ProductResponseDto> uploadProductWithImage(AddProductDto productDto, MultipartFile imageFile) {
+    public ApiResponseDto<ProductResponseDto> uploadProductWithImage(AddProductDto productDto, MultipartFile imageFile) {
         try {
             // 🚫 Step 1: Check for duplicate product name
             Optional<Product> existingProduct = productRepository.findByNameIgnoreCase(productDto.getName());
             if (existingProduct.isPresent()) {
-                return new ApiResponse<>(false,
+                return new ApiResponseDto<>(false,
                         "A product with this name already exists: " + productDto.getName(),
                         null);
             }
@@ -90,16 +87,16 @@ UserFactoryMappingRepository userFactoryMappingRepository;
                     savedProduct.getIsActive()
             );
 
-            return new ApiResponse<>(true, "Product uploaded successfully", responseDto);
+            return new ApiResponseDto<>(true, "Product uploaded successfully", responseDto);
         } catch (IOException e) {
-            return new ApiResponse<>(false, "Image upload failed: " + e.getMessage(), null);
+            return new ApiResponseDto<>(false, "Image upload failed: " + e.getMessage(), null);
         } catch (Exception e) {
-            return new ApiResponse<>(false, "Error uploading product: " + e.getMessage(), null);
+            return new ApiResponseDto<>(false, "Error uploading product: " + e.getMessage(), null);
         }
     }
 
     @Override
-    public ApiResponse<Page<ProductResponseDto>> getAllProducts(int page, int size, String search, String categoryName) {
+    public ApiResponseDto<Page<ProductResponseDto>> getAllProducts(int page, int size, String search, String categoryName) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("id").descending());
 
         // Start with an "empty" Specification and include only active products
@@ -129,12 +126,12 @@ UserFactoryMappingRepository userFactoryMappingRepository;
             return dto;
         });
 
-        return new ApiResponse<>(true, "Active products fetched successfully", dtoPage);
+        return new ApiResponseDto<>(true, "Active products fetched successfully", dtoPage);
     }
 
 
     @Override
-    public ApiResponse<String> softDeleteProduct(Long productId) {
+    public ApiResponseDto<String> softDeleteProduct(Long productId) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
         User loggedInUser = userRepository.findByEmail(username);
@@ -147,15 +144,15 @@ UserFactoryMappingRepository userFactoryMappingRepository;
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new RuntimeException("Product not found"));
         if (product.getIsActive() == Account_Status.IN_ACTIVE) {
-            return new ApiResponse<>(false, "Product already inactive", null);
+            return new ApiResponseDto<>(false, "Product already inactive", null);
         }
         product.setIsActive(Account_Status.IN_ACTIVE);
         productRepository.save(product);
-        return new ApiResponse<>(true, "Product marked as IN_ACTIVE successfully", "Product id : " + productId);
+        return new ApiResponseDto<>(true, "Product marked as IN_ACTIVE successfully", "Product id : " + productId);
     }
 
     @Override
-    public ApiResponse<ProductResponseDto> updateProduct(Long id, AddProductDto productDto, MultipartFile imageFile) throws Exception {
+    public ApiResponseDto<ProductResponseDto> updateProduct(Long id, AddProductDto productDto, MultipartFile imageFile) throws Exception {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Product not found"));
 
@@ -195,7 +192,7 @@ UserFactoryMappingRepository userFactoryMappingRepository;
                 product.getIsActive()
         );
 
-        return new ApiResponse<>(true, "Product updated successfully", dto);
+        return new ApiResponseDto<>(true, "Product updated successfully", dto);
     }
 
 

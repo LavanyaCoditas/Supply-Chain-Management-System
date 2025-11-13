@@ -29,13 +29,13 @@ public class CentralOfficeServiceImpl implements CentralOfficeService {
 
     @Override
     @Transactional
-    public ApiResponse<Void> createCentralOffice(CentralOfficeDto dto) {
+    public ApiResponseDto<Void> createCentralOffice(CentralOfficeDto dto) {
         if (centralOfficeRepository.count() > 0) {
-            return new ApiResponse<>(false, "A Central Office already exists in the system", null);
+            return new ApiResponseDto<>(false, "A Central Office already exists in the system", null);
         }
 
         if (dto.getCentralOfficeHeadEmail() == null || dto.getCentralOfficeHeadEmail().isBlank()) {
-            return new ApiResponse<>(false, "Central Office head email is required", null);
+            return new ApiResponseDto<>(false, "Central Office head email is required", null);
         }
 
         CentralOffice office = new CentralOffice();
@@ -54,7 +54,7 @@ public class CentralOfficeServiceImpl implements CentralOfficeService {
             user.setRole(Role.CENTRAL_OFFICE);
             userRepository.save(user);  // This persists the new user in the DB
         } else if (user.getRole() != Role.CENTRAL_OFFICE) {
-            return new ApiResponse<>(false, "User exists but is not a Central Office user", null);
+            return new ApiResponseDto<>(false, "User exists but is not a Central Office user", null);
         }
 
         // Step 5: Map this officer to the single central office
@@ -63,12 +63,12 @@ public class CentralOfficeServiceImpl implements CentralOfficeService {
         mapping.setUser(user);
         mappingRepository.save(mapping);  // This persists the mapping in the DB
 
-        return new ApiResponse<>(true, "Central Office created successfully", null);
+        return new ApiResponseDto<>(true, "Central Office created successfully", null);
     }
 
     @Transactional
     @Override
-    public ApiResponse<Void> addCentralOfficerToOffice(AddCentralOfficerDto dto) {
+    public ApiResponseDto<Void> addCentralOfficerToOffice(AddCentralOfficerDto dto) {
         // Step 1: Check if the Central Office exists
         CentralOffice office = centralOfficeRepository.findById(1L)
                 .orElseThrow(() -> new RuntimeException("Central Office not found"));
@@ -78,10 +78,10 @@ public class CentralOfficeServiceImpl implements CentralOfficeService {
         if (officer != null) {
             // If the user exists, check if they are already a Central Officer
             if (officer.getRole() == Role.CENTRAL_OFFICE) {
-                return new ApiResponse<>(false, "User is already a Central Officer", null);
+                return new ApiResponseDto<>(false, "User is already a Central Officer", null);
             }
             // If the user exists but is not a Central Officer, return an error
-            return new ApiResponse<>(false, "User already exists but is not a Central Officer", null);
+            return new ApiResponseDto<>(false, "User already exists but is not a Central Officer", null);
         }
 
         // Step 3: If the user does not exist, create a new Central Officer
@@ -99,11 +99,11 @@ public class CentralOfficeServiceImpl implements CentralOfficeService {
         mappingRepository.save(mapping);
 
         // Return success response
-        return new ApiResponse<>(true, "Central Officer added to Central Office successfully", null);
+        return new ApiResponseDto<>(true, "Central Officer added to Central Office successfully", null);
     }
 
     @Override
-    public ApiResponse<List<CentralOfficeResponseDto>> getCentralOffice() {
+    public ApiResponseDto<List<CentralOfficeResponseDto>> getCentralOffice() {
         List<CentralOffice> offices = centralOfficeRepository.findAll();
 
         // Convert Entity → DTO
@@ -136,7 +136,7 @@ public class CentralOfficeServiceImpl implements CentralOfficeService {
             return dto;
         }).toList();
 
-        return new ApiResponse<>(true, "Central offices fetched successfully", officeDtos);
+        return new ApiResponseDto<>(true, "Central offices fetched successfully", officeDtos);
     }
 
 

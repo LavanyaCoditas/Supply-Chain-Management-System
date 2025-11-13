@@ -5,7 +5,9 @@ import lombok.Data;
 public class EmployeeRequestDto {
     private String name;
     private String email;
+    private Long phone;
     private Role role; // "CHIEF_SUPERVISOR" or "WORKER"
-    private Long bayId;  // Optional for worker
+    private Long bayId;
+    // Optional for worker
 
 }

@@ -13,5 +13,6 @@ import java.util.Optional;
 public interface ToolStorageMappingRepository extends JpaRepository<ToolStorageMapping, Long> {
     // Additional custom queries if needed
     Optional<ToolStorageMapping> findByFactoryAndTool(Factory factory, Tool tool);
+    Optional<ToolStorageMapping> findByToolAndFactory(Tool tool, Factory factory);
 
 }

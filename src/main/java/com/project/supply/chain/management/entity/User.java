@@ -26,7 +26,9 @@ public class User implements UserDetails {
     private String img;
     @Enumerated(EnumType.STRING)
     private Role role;
+
     private Long phone;
+
     private String password;
     @Enumerated(EnumType.STRING)
     private Account_Status isActive =Account_Status.ACTIVE;

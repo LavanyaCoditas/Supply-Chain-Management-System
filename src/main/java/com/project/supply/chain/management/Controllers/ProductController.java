@@ -2,9 +2,8 @@ package com.project.supply.chain.management.Controllers;
 
 import com.project.supply.chain.management.ServiceInterfaces.ProductService;
 import com.project.supply.chain.management.dto.AddProductDto;
-import com.project.supply.chain.management.dto.ApiResponse;
+import com.project.supply.chain.management.dto.ApiResponseDto;
 import com.project.supply.chain.management.dto.ProductResponseDto;
-import com.project.supply.chain.management.entity.Product;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
@@ -20,38 +19,38 @@ public class ProductController
     private ProductService productService;
 
     @PostMapping(value = "/upload", consumes = {"multipart/form-data"})
-    public ResponseEntity<ApiResponse<ProductResponseDto>> uploadProduct(
+    public ResponseEntity<ApiResponseDto<ProductResponseDto>> uploadProduct(
             @ModelAttribute AddProductDto productDto,
             @RequestPart("image") MultipartFile imageFile) {
 
-        ApiResponse<ProductResponseDto> response = productService.uploadProductWithImage(productDto, imageFile);
+        ApiResponseDto<ProductResponseDto> response = productService.uploadProductWithImage(productDto, imageFile);
         return ResponseEntity.ok(response);
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<Page<ProductResponseDto>>> getAllProducts(
+    public ResponseEntity<ApiResponseDto<Page<ProductResponseDto>>> getAllProducts(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(required = false) String search,
             @RequestParam(required = false) String categoryName) {
 
-        ApiResponse<Page<ProductResponseDto>> response = productService.getAllProducts(page, size, search, categoryName);
+        ApiResponseDto<Page<ProductResponseDto>> response = productService.getAllProducts(page, size, search, categoryName);
         return ResponseEntity.ok(response);
     }
     @DeleteMapping("/delete/{productId}")
-    public ResponseEntity<ApiResponse<String>> softDeleteProduct(@PathVariable Long productId) {
-        ApiResponse<String> response = productService.softDeleteProduct(productId);
+    public ResponseEntity<ApiResponseDto<String>> softDeleteProduct(@PathVariable Long productId) {
+        ApiResponseDto<String> response = productService.softDeleteProduct(productId);
         return ResponseEntity.ok(response);
     }
     //update product remaining
     @PutMapping(value = "/{id}", consumes = {"multipart/form-data"})
     @PreAuthorize("hasAnyAuthority('OWNER', 'CENTRAL_OFFICE')")
-    public ResponseEntity<ApiResponse<ProductResponseDto>> updateProduct(
+    public ResponseEntity<ApiResponseDto<ProductResponseDto>> updateProduct(
             @PathVariable Long id,
             @ModelAttribute AddProductDto productDto,
             @RequestPart(value = "image", required = false) MultipartFile imageFile) throws Exception {
 
-        ApiResponse<ProductResponseDto> response = productService.updateProduct(id, productDto, imageFile);
+        ApiResponseDto<ProductResponseDto> response = productService.updateProduct(id, productDto, imageFile);
         return ResponseEntity.ok(response);
     }
 

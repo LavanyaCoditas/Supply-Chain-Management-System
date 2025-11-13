@@ -5,7 +5,7 @@ import com.project.supply.chain.management.Repositories.ToolsRepository;
 import com.project.supply.chain.management.ServiceInterfaces.ToolCategoryService;
 import com.project.supply.chain.management.constants.Account_Status;
 import com.project.supply.chain.management.dto.AddToolCategoryDto;
-import com.project.supply.chain.management.dto.ApiResponse;
+import com.project.supply.chain.management.dto.ApiResponseDto;
 import com.project.supply.chain.management.dto.ToolCategoryDto;
 import com.project.supply.chain.management.entity.Tool;
 import com.project.supply.chain.management.entity.ToolCategory;
@@ -22,10 +22,10 @@ public class ToolCategoryServiceImpl implements ToolCategoryService {
     @Autowired
     ToolsRepository toolsRepository;
     @Override
-    public ApiResponse<ToolCategoryDto> addToolCategory(AddToolCategoryDto dto) {
+    public ApiResponseDto<ToolCategoryDto> addToolCategory(AddToolCategoryDto dto) {
         // Check for duplicate
         if (toolCategoryRepository.existsByNameIgnoreCase(dto.getName())) {
-            return new ApiResponse<>(false, "Tool category with this name already exists", null);
+            return new ApiResponseDto<>(false, "Tool category with this name already exists", null);
         }
 
         ToolCategory category = new ToolCategory();
@@ -39,16 +39,16 @@ public class ToolCategoryServiceImpl implements ToolCategoryService {
                 saved.getDescription()
         );
 
-        return new ApiResponse<>(true, "Tool category created successfully", response);
+        return new ApiResponseDto<>(true, "Tool category created successfully", response);
     }
 
 
     @Override
-    public ApiResponse<List<ToolCategoryDto>> getAllToolCategories() {
+    public ApiResponseDto<List<ToolCategoryDto>> getAllToolCategories() {
         List<ToolCategory> categories = toolCategoryRepository.findAll();
 
         if (categories.isEmpty()) {
-            return new ApiResponse<>(false, "No tool categories found", null);
+            return new ApiResponseDto<>(false, "No tool categories found", null);
         }
 
         List<ToolCategoryDto> dtoList = categories.stream()
@@ -59,10 +59,10 @@ public class ToolCategoryServiceImpl implements ToolCategoryService {
                 ))
                 .toList();
 
-        return new ApiResponse<>(true, "Tool categories fetched successfully", dtoList);
+        return new ApiResponseDto<>(true, "Tool categories fetched successfully", dtoList);
     }
     @Override
-    public ApiResponse<ToolCategoryDto> updateToolCategory(Long id, AddToolCategoryDto dto) {
+    public ApiResponseDto<ToolCategoryDto> updateToolCategory(Long id, AddToolCategoryDto dto) {
         // ✅ 1. Fetch existing category
         ToolCategory category = toolCategoryRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Tool category not found"));
@@ -71,7 +71,7 @@ public class ToolCategoryServiceImpl implements ToolCategoryService {
         if (dto.getName() != null &&
                 !dto.getName().equalsIgnoreCase(category.getName()) &&
                 toolCategoryRepository.existsByNameIgnoreCase(dto.getName())) {
-            return new ApiResponse<>(false, "Tool category with this name already exists", null);
+            return new ApiResponseDto<>(false, "Tool category with this name already exists", null);
         }
 
         // ✅ 3. Update fields
@@ -87,14 +87,14 @@ public class ToolCategoryServiceImpl implements ToolCategoryService {
                 updated.getDescription()
         );
 
-        return new ApiResponse<>(true, "Tool category updated successfully", response);
+        return new ApiResponseDto<>(true, "Tool category updated successfully", response);
     }
 
 
     //delte tool category and the tools under it
     @Override
     @Transactional
-    public ApiResponse<Void> deleteToolCategory(Long id) {
+    public ApiResponseDto<Void> deleteToolCategory(Long id) {
         // 1️⃣ Find tool category
         ToolCategory category = toolCategoryRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Tool category not found"));
@@ -112,7 +112,7 @@ public class ToolCategoryServiceImpl implements ToolCategoryService {
         toolCategoryRepository.delete(category);
 
         // 5️⃣ Return success
-        return new ApiResponse<>(true, "Tool category deleted successfully and all related tools set to inactive", null);
+        return new ApiResponseDto<>(true, "Tool category deleted successfully and all related tools set to inactive", null);
     }
 
 }

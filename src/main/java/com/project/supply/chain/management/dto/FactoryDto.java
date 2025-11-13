@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 public class FactoryDto {
-
+private Long factoryId;
         private String name;
         private String city;
         private String address;

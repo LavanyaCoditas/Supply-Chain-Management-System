@@ -14,12 +14,10 @@ public class ToolStorageMapping {
     private Long id;
 
     @ManyToOne
-
     @JoinColumn(name = "factory_id")
     private Factory factory;
 
     @ManyToOne
-
     @JoinColumn(name = "tool_id")
     private Tool tool;
 

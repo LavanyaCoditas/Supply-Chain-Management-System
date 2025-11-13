@@ -8,7 +8,7 @@ import com.project.supply.chain.management.constants.Account_Status;
 import com.project.supply.chain.management.specifications.MerchandiseSpecifications;
 import com.project.supply.chain.management.util.CloudinaryConfig;
 import com.project.supply.chain.management.dto.AddMerchandiseDto;
-import com.project.supply.chain.management.dto.ApiResponse;
+import com.project.supply.chain.management.dto.ApiResponseDto;
 import com.project.supply.chain.management.dto.MerchandiseResponseDto;
 import com.project.supply.chain.management.entity.Merchandise;
 import com.project.supply.chain.management.entity.User;
@@ -42,15 +42,15 @@ import java.util.Map;
         }
 
         @Override
-        public ApiResponse<MerchandiseResponseDto> addMerchandise(AddMerchandiseDto dto, MultipartFile image) throws IOException {
+        public ApiResponseDto<MerchandiseResponseDto> addMerchandise(AddMerchandiseDto dto, MultipartFile image) throws IOException {
             String email = SecurityContextHolder.getContext().getAuthentication().getName();
             User user = userRepository.findByEmail(email);
             if (user == null) {
-                return new ApiResponse<>(false, "User not found", null);
+                return new ApiResponseDto<>(false, "User not found", null);
             }
 
             if (merchandiseRepository.existsByNameIgnoreCase(dto.getName())) {
-                return new ApiResponse<>(false, "Merchandise with this name already exists", null);
+                return new ApiResponseDto<>(false, "Merchandise with this name already exists", null);
             }
 
             // Upload to Cloudinary
@@ -80,70 +80,97 @@ import java.util.Map;
 
             );
 
-            return new ApiResponse<>(true, "Merchandise added successfully", response);
+            return new ApiResponseDto<>(true, "Merchandise added successfully", response);
+        }
+
+
+        @Override
+        public ApiResponseDto<Page<MerchandiseResponseDto>> getAllMerchandise(
+                int page,
+                int size,
+                String search,
+                Integer minRewardPoints,
+                Integer maxRewardPoints,
+                String stockStatus,
+                String sort) {
+
+            Pageable pageable;
+
+            // ✅ Sorting
+            if ("rewardPointsAsc".equalsIgnoreCase(sort)) {
+                pageable = PageRequest.of(page, size, Sort.by("rewardPoints").ascending());
+            } else if ("rewardPointsDesc".equalsIgnoreCase(sort)) {
+                pageable = PageRequest.of(page, size, Sort.by("rewardPoints").descending());
+            } else {
+                pageable = PageRequest.of(page, size, Sort.by("id").descending());
+            }
+
+            // ✅ Initialize Specification
+            Specification<Merchandise> spec = (root, query, cb) -> cb.conjunction();
+
+            // ✅ Filter by Active Merchandise
+            spec = spec.and((root, query, cb) ->
+                    cb.equal(root.get("isActive"), Account_Status.ACTIVE)
+            );
+
+            // ✅ Search by Name
+            if (search != null && !search.isBlank()) {
+                spec = spec.and(MerchandiseSpecifications.searchByName(search));
+            }
+
+            // ✅ Filter by Reward Points
+            if (minRewardPoints != null) {
+                spec = spec.and(MerchandiseSpecifications.hasMinRewardPoints(minRewardPoints));
+            }
+
+            if (maxRewardPoints != null) {
+                spec = spec.and(MerchandiseSpecifications.hasMaxRewardPoints(maxRewardPoints));
+            }
+
+            // ✅ Filter by Stock Status
+            if (stockStatus != null) {
+                if (stockStatus.equalsIgnoreCase("IN_STOCK")) {
+                    spec = spec.and((root, query, cb) -> cb.greaterThan(root.get("quantity"), 0));
+                } else if (stockStatus.equalsIgnoreCase("OUT_OF_STOCK")) {
+                    spec = spec.and((root, query, cb) -> cb.lessThanOrEqualTo(root.get("quantity"), 0));
+                }
+            }
+
+            // ✅ Fetch from DB
+            Page<Merchandise> merchandisePage = merchandiseRepository.findAll(spec, pageable);
+
+            // ✅ Map to DTO
+            Page<MerchandiseResponseDto> dtoPage = merchandisePage.map(m -> new MerchandiseResponseDto(
+                    m.getId(),
+                    m.getName(),
+                    m.getRewardPoints(),
+                    m.getQuantity(),
+                    m.getImage()
+            ));
+
+            return new ApiResponseDto<>(true, "Filtered merchandise fetched successfully", dtoPage);
         }
 
 
 
-            @Override
-
-            public ApiResponse<Page<MerchandiseResponseDto>> getAllMerchandise(int page, int size, String search, String sort) {
-                Pageable pageable;
-
-                // ✅ Sorting logic
-                if ("rewardPointsAsc".equalsIgnoreCase(sort)) {
-                    pageable = PageRequest.of(page, size, Sort.by("rewardPoints").ascending());
-                } else if ("rewardPointsDesc".equalsIgnoreCase(sort)) {
-                    pageable = PageRequest.of(page, size, Sort.by("rewardPoints").descending());
-                } else {
-                    pageable = PageRequest.of(page, size, Sort.by("id").descending());
-                }
-
-                // ✅ Initialize spec
-                Specification<Merchandise> spec = (root, query, cb) -> cb.conjunction();
-
-                // ✅ Filter by active status
-                spec = spec.and((root, query, cb) ->
-                        cb.equal(root.get("isActive"), Account_Status.ACTIVE)
-                );
-
-                // ✅ Optional search filter
-                if (search != null && !search.isBlank()) {
-                    spec = spec.and(MerchandiseSpecifications.searchByName(search));
-                }
-
-                // ✅ Query DB
-                Page<Merchandise> merchandisePage = merchandiseRepository.findAll(spec, pageable);
-
-                // ✅ Map to DTO
-                Page<MerchandiseResponseDto> dtoPage = merchandisePage.map(m -> new MerchandiseResponseDto(
-                        m.getId(),
-                        m.getName(),
-                        m.getRewardPoints(),
-                        m.getQuantity(),
-                        m.getImage()
-                ));
-
-                return new ApiResponse<>(true, "Active merchandise fetched successfully", dtoPage);
-            }
 
         @Override
-        public ApiResponse<Void> softDeleteMerchandise(Long id) {
+        public ApiResponseDto<Void> softDeleteMerchandise(Long id) {
             Merchandise merchandise = merchandiseRepository.findById(id)
                     .orElseThrow(() -> new RuntimeException("Merchandise not found"));
 
             if (merchandise.getIsActive() == Account_Status.IN_ACTIVE) {
-                return new ApiResponse<>(false, "Merchandise already deleted", null);
+                return new ApiResponseDto<>(false, "Merchandise already deleted", null);
             }
 
             merchandise.setIsActive(Account_Status.IN_ACTIVE);
             merchandiseRepository.save(merchandise);
 
-            return new ApiResponse<>(true, "Merchandise deleted successfully ", null);
+            return new ApiResponseDto<>(true, "Merchandise deleted successfully ", null);
         }
 
         @Override
-        public ApiResponse<MerchandiseResponseDto> updateMerchandise(Long id, AddMerchandiseDto dto, MultipartFile imageFile) throws Exception {
+        public ApiResponseDto<MerchandiseResponseDto> updateMerchandise(Long id, AddMerchandiseDto dto, MultipartFile imageFile) throws Exception {
             Merchandise merchandise = merchandiseRepository.findById(id)
                     .orElseThrow(() -> new RuntimeException("Merchandise not found"));
 
@@ -171,21 +198,21 @@ import java.util.Map;
                     updated.getImage()
             );
 
-            return new ApiResponse<>(true, "Merchandise updated successfully", response);
+            return new ApiResponseDto<>(true, "Merchandise updated successfully", response);
         }
         @Override
-        public ApiResponse<MerchandiseResponseDto> restockMerchandise(Long id, Long additionalQuantity) {
+        public ApiResponseDto<MerchandiseResponseDto> restockMerchandise(Long id, Long additionalQuantity) {
             // 🔐 Validate logged-in user
             String email = SecurityContextHolder.getContext().getAuthentication().getName();
             User user = userRepository.findByEmail(email);
 
             if (user == null) {
-                return new ApiResponse<>(false, "User not found", null);
+                return new ApiResponseDto<>(false, "User not found", null);
             }
 
             if (!(user.getRole().equals(com.project.supply.chain.management.constants.Role.OWNER) ||
                     user.getRole().equals(com.project.supply.chain.management.constants.Role.CENTRAL_OFFICE))) {
-                return new ApiResponse<>(false, "Access denied: Only OWNER or CENTRAL_OFFICE can restock merchandise", null);
+                return new ApiResponseDto<>(false, "Access denied: Only OWNER or CENTRAL_OFFICE can restock merchandise", null);
             }
 
             // ✅ Find merchandise
@@ -193,7 +220,7 @@ import java.util.Map;
                     .orElseThrow(() -> new RuntimeException("Merchandise not found"));
 
             if (merchandise.getIsActive() == Account_Status.IN_ACTIVE) {
-                return new ApiResponse<>(false, "Cannot restock inactive merchandise", null);
+                return new ApiResponseDto<>(false, "Cannot restock inactive merchandise", null);
             }
 
             // ✅ Update quantity
@@ -210,7 +237,7 @@ import java.util.Map;
                     merchandise.getImage()
             );
 
-            return new ApiResponse<>(true, "Merchandise restocked successfully", response);
+            return new ApiResponseDto<>(true, "Merchandise restocked successfully", response);
         }
 
 

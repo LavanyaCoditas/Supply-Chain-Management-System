@@ -18,9 +18,11 @@ public class ToolIssuance {
     @ManyToOne @JoinColumn(name = "request_id")
     private ToolRequest request;
 
-    @ManyToOne @JoinColumn(name = "tool_id")
+    @ManyToOne
+    @JoinColumn(name = "tool_id")
     private Tool tool;
 
     @Enumerated(EnumType.STRING)
     private ToolIssuanceStatus status = ToolIssuanceStatus.ISSUED;
+
 }

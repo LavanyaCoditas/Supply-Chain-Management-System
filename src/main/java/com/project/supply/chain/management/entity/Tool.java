@@ -6,6 +6,8 @@ package com.project.supply.chain.management.entity;
         import jakarta.persistence.*;
         import lombok.*;
         import java.time.LocalDateTime;
+        import java.util.ArrayList;
+        import java.util.List;
 
 @Entity
 @Table(name = "tool")
@@ -26,18 +28,20 @@ public class Tool {
     private String imageUrl;
 
     @Enumerated(EnumType.STRING)
+    @Column(name = "type")
     private ToolType type;
 
     @Enumerated(EnumType.STRING)
     private Expensive isExpensive;
 
     private Integer threshold;
-    private Integer qty;
+
     @Enumerated(EnumType.STRING)
     private Account_Status isActive ;
     private LocalDateTime createdAt = LocalDateTime.now();
     private LocalDateTime updatedAt = LocalDateTime.now();
-
+    @OneToMany
+    private List<ToolStock> toolStockList =new ArrayList<>();
 
 }
 

@@ -5,10 +5,10 @@ import org.springframework.data.domain.Page;
 
 public interface CheifSupervisorService {
 
-    ApiResponse<WorkerResponseDto> addWorker(AddEmployeeDto dto);
-    ApiResponse<WorkerResponseDto> updateWorker(Long workerId, UpdateEmployeeDto dto);
-    ApiResponse<Void> softDeleteWorker(Long workerId);
-    ApiResponse<Page<WorkerResponseDto>> searchWorkers(
+    ApiResponseDto<WorkerResponseDto> addWorker(AddEmployeeDto dto);
+    ApiResponseDto<WorkerResponseDto> updateWorker(Long workerId, UpdateEmployeeDto dto);
+    ApiResponseDto<Void> softDeleteWorker(Long workerId);
+    ApiResponseDto<Page<WorkerResponseDto>> searchWorkers(
             String name,
             String factoryName,
             String bayName,

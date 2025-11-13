@@ -1,7 +1,7 @@
 package com.project.supply.chain.management.ServiceImplementations;
 
 import com.project.supply.chain.management.Repositories.BlacklistedTokenRepository;
-import com.project.supply.chain.management.dto.ApiResponse;
+import com.project.supply.chain.management.dto.ApiResponseDto;
 import com.project.supply.chain.management.entity.BlacklistedToken;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -26,9 +26,9 @@ public class AuthService {
         this.blacklistedTokenRepository = blacklistedTokenRepository;
     }
 
-    public ApiResponse<Void> logout(String token) {
+    public ApiResponseDto<Void> logout(String token) {
         if (token == null || token.isBlank()) {
-            return new ApiResponse<>(false, "No token provided", null);
+            return new ApiResponseDto<>(false, "No token provided", null);
         }
 
         String rawToken = token.replace("Bearer ", "").trim();
@@ -55,9 +55,9 @@ public class AuthService {
 
             SecurityContextHolder.clearContext();
 
-            return new ApiResponse<>(true, "Logged out successfully", null);
+            return new ApiResponseDto<>(true, "Logged out successfully", null);
         } catch (Exception e) {
-            return new ApiResponse<>(false, "Invalid or expired token", null);
+            return new ApiResponseDto<>(false, "Invalid or expired token", null);
         }
     }
 }

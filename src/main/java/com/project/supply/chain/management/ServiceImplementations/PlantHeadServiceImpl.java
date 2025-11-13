@@ -57,12 +57,20 @@ public class PlantHeadServiceImpl implements PlantHeadService {
 //        private final UserFactoryMappingRepository userFactoryMappingRepository;
     @Override
     @Transactional
-    public ApiResponse<String> createBay(Long plantHeadId, BayRequestDto request) {
-        // 1️⃣ Validate Plant Head existence
-        User plantHead = userRepository.findById(plantHeadId)
-                .orElseThrow(() -> new RuntimeException("Plant Head not found"));
+    public ApiResponseDto<String> createBay( BayRequestDto request) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String email = authentication.getName();
+        // Validate Plant Head existence
+        User plantHead = userRepository.findByEmail(email);
+        if (plantHead == null) {
+            throw new RuntimeException("Logged-in Plant Head not found");
+        }
 
-        // 2️⃣ Ensure Plant Head is actually assigned to a factory
+        //  Verify that the Plant Head is mapped to a factory
+        UserFactoryMapping mapping = userFactoryMappingRepository.findByUser(plantHead)
+                .orElseThrow(() -> new RuntimeException("Plant Head is not mapped to any factory"));
+
+        //  Ensure Plant Head is actually assigned to a factory
         Optional<UserFactoryMapping> optionalMapping = userFactoryMappingRepository.findByUser(plantHead);
         if (optionalMapping.isEmpty() || optionalMapping.get().getFactory() == null) {
             throw new RuntimeException("Bay cannot be created — Plant Head is not mapped to any factory");
@@ -85,13 +93,13 @@ public class PlantHeadServiceImpl implements PlantHeadService {
 
         bayRepository.save(bay);
 
-        return new ApiResponse<>(true, "Bay created successfully for factory: " + factory.getName(), bay.getName());
+        return new ApiResponseDto<>(true, "Bay created successfully for factory: " + factory.getName(), bay.getName());
     }
 
 
 
     @Override
-    public ApiResponse<List<BayListdto>> getBaysInFactory() {
+    public ApiResponseDto<List<BayListdto>> getBaysInFactory() {
         // 🔹 Get current logged-in user
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String email = authentication.getName();
@@ -122,12 +130,12 @@ public class PlantHeadServiceImpl implements PlantHeadService {
                 })
                 .toList();
 
-        return new ApiResponse<>(true, "Bays fetched successfully", bayDtos);
+        return new ApiResponseDto<>(true, "Bays fetched successfully", bayDtos);
     }
 
 
     @Override
-    public ApiResponse<UserResponseDto> createEmployeeForCurrentPlantHead(EmployeeRequestDto request)
+    public ApiResponseDto<UserResponseDto> createEmployeeForCurrentPlantHead(EmployeeRequestDto request)
     {
 
         // 1️⃣ Get logged-in Plant Head
@@ -161,6 +169,7 @@ public class PlantHeadServiceImpl implements PlantHeadService {
         newUser.setEmail(request.getEmail());
         newUser.setPassword(passwordEncoder.encode("12345678"));
         newUser.setRole(request.getRole());
+        newUser.setPhone(request.getPhone());
         newUser.setIsActive(Account_Status.ACTIVE);
 
         // Optional: add image if sent in request
@@ -196,13 +205,14 @@ public class PlantHeadServiceImpl implements PlantHeadService {
                 newUser.getId(),
                 newUser.getUsername(),
                 newUser.getEmail(),
+                newUser.getPhone(),
                 newUser.getRole().name(),
                 factory.getName(),
                 bay != null ? bay.getName() : null,
                 newUser.getImg() // ✅ Added image to response
         );
 
-        return new ApiResponse<>(
+        return new ApiResponseDto<>(
                 true,
                 "Employee (" + request.getRole().name() + ") created and email sent successfully",
                 responseDto
@@ -231,7 +241,7 @@ public class PlantHeadServiceImpl implements PlantHeadService {
 
 
     @Override
-    public ApiResponse<Page<UserResponseDto>> getEmployeesInFactory(
+    public ApiResponseDto<Page<UserResponseDto>> getEmployeesInFactory(
             String keyword, String roleStr, int page, int size
     ) {
         // ✅ 1. Get logged-in Plant Head
@@ -275,6 +285,7 @@ public class PlantHeadServiceImpl implements PlantHeadService {
                     user.getId(),
                     user.getUsername(),
                     user.getEmail(),
+                    user.getPhone(),
                     mapping.getAssignedRole() != null ? mapping.getAssignedRole().toString() : "N/A",
                     mapping.getFactory() != null ? mapping.getFactory().getName() : null,
                     mapping.getBayId() != null ? mapping.getBayId().getName() : null,
@@ -282,14 +293,14 @@ public class PlantHeadServiceImpl implements PlantHeadService {
             );
         });
 
-        return new ApiResponse<>(true, "Employees fetched successfully", response);
+        return new ApiResponseDto<>(true, "Employees fetched successfully", response);
     }
 
 
 
     @Override
     @Transactional
-    public ApiResponse<Void> updateFactoryProductStock(UpdateStockRequestDto request) {
+    public ApiResponseDto<Void> updateFactoryProductStock(UpdateStockRequestDto request) {
         // ✅ 1. Get logged-in Plant Head
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         User plantHead = userRepository.findByEmail(email);
@@ -324,10 +335,10 @@ public class PlantHeadServiceImpl implements PlantHeadService {
 
         factoryProductionRepository.save(production);
 
-        return new ApiResponse<>(true, "Factory product stock updated successfully", null);
+        return new ApiResponseDto<>(true, "Factory product stock updated successfully", null);
     }
     @Override
-    public ApiResponse<List<FactoryProductStockResponseDto>> getAllProductsWithStock() {
+    public ApiResponseDto<List<FactoryProductStockResponseDto>> getAllProductsWithStock() {
         // ✅ 1. Get currently logged-in Plant Head
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         User plantHead = userRepository.findByEmail(email);
@@ -367,10 +378,10 @@ public class PlantHeadServiceImpl implements PlantHeadService {
             );
         }).toList();
 
-        return new ApiResponse<>(true, "Products with factory stock fetched successfully", result);
+        return new ApiResponseDto<>(true, "Products with factory stock fetched successfully", result);
     }
     @Override
-    public ApiResponse<List<FactoryProductStockResponseDto>> getLowStockProducts() {
+    public ApiResponseDto<List<FactoryProductStockResponseDto>> getLowStockProducts() {
         // ✅ 1. Get logged-in Plant Head
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         User plantHead = userRepository.findByEmail(email);
@@ -417,7 +428,7 @@ public class PlantHeadServiceImpl implements PlantHeadService {
                 .filter(dto -> dto.getThreshold() != null && dto.getCurrentQty() <= dto.getThreshold())
                 .collect(Collectors.toList());
 
-        return new ApiResponse<>(true, "Low stock products fetched successfully", lowStockProducts);
+        return new ApiResponseDto<>(true, "Low stock products fetched successfully", lowStockProducts);
     }
 
 }

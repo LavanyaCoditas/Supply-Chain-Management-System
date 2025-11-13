@@ -2,14 +2,12 @@ package com.project.supply.chain.management.Controllers;
 
 import com.project.supply.chain.management.ServiceImplementations.AuthService;
 import com.project.supply.chain.management.ServiceImplementations.CloudinaryService;
-import com.project.supply.chain.management.ServiceImplementations.UserServiceImpl;
 
 import com.project.supply.chain.management.ServiceInterfaces.UserService;
 import com.project.supply.chain.management.dto.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 
@@ -39,7 +37,7 @@ public class AuthenticationController
     private AuthService authService;
 
     @PostMapping("/logout")
-    public ApiResponse<Void> logout(@RequestHeader(value = "Authorization", required = false) String token) {
+    public ApiResponseDto<Void> logout(@RequestHeader(value = "Authorization", required = false) String token) {
         return authService.logout(token);
     }
     }

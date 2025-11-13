@@ -13,15 +13,18 @@ public class ToolRestockRequest {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne @JoinColumn(name = "restocked_by")
+    @ManyToOne
+    @JoinColumn(name = "restocked_by")
     private User restockedBy;
 
-    @ManyToOne @JoinColumn(name = "tool_id")
+    @ManyToOne
+    @JoinColumn(name = "tool_id")
     private Tool tool;
 
     private Integer toolQty;
 
-    @ManyToOne @JoinColumn(name = "factory_id")
+    @ManyToOne
+    @JoinColumn(name = "factory_id")
     private Factory factory;
 
     private LocalDateTime createdAt = LocalDateTime.now();
