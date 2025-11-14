@@ -38,10 +38,11 @@ public class Tool {
 
     @Enumerated(EnumType.STRING)
     private Account_Status isActive ;
-    private LocalDateTime createdAt = LocalDateTime.now();
-    private LocalDateTime updatedAt = LocalDateTime.now();
+
     @OneToMany
     private List<ToolStock> toolStockList =new ArrayList<>();
+    private  LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 
 }
 

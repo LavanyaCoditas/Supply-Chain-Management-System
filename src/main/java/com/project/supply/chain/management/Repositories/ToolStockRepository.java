@@ -11,4 +11,5 @@ import java.util.Optional;
 public interface ToolStockRepository extends JpaRepository<ToolStock,Long> {
     Optional<ToolStock> findByToolAndFactory(Tool tool, Factory factory);
     List<ToolStock> findByFactory(Factory factory);
+    
 }

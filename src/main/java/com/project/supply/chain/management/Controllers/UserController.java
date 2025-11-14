@@ -101,6 +101,8 @@ public class UserController {
     }
 
     //get api for owner
+
+
     @GetMapping("/get/all/employees")
     @PreAuthorize("hasAuthority('OWNER')")
     public ResponseEntity<ApiResponseDto<Page<UserListDto>>> getAllEmployees(
@@ -108,12 +110,29 @@ public class UserController {
             @RequestParam(required = false) String role,
             @RequestParam(required = false) Long factoryId,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size
-
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "username") String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDir
     ) {
-        ApiResponseDto<Page<UserListDto>> response = userService.getAllEmployees(search, role, factoryId, page, size);
+        ApiResponseDto<Page<UserListDto>> response =
+                userService.getAllEmployees(search, role, factoryId, page, size, sortBy, sortDir);
+
         return ResponseEntity.ok(response);
     }
+
+//    @GetMapping("/get/all/employees")
+//    @PreAuthorize("hasAuthority('OWNER')")
+//    public ResponseEntity<ApiResponseDto<Page<UserListDto>>> getAllEmployees(
+//            @RequestParam(required = false) String search,
+//            @RequestParam(required = false) String role,
+//            @RequestParam(required = false) Long factoryId,
+//            @RequestParam(defaultValue = "0") int page,
+//            @RequestParam(defaultValue = "20") int size
+//
+//    ) {
+//        ApiResponseDto<Page<UserListDto>> response = userService.getAllEmployees(search, role, factoryId, page, size);
+//        return ResponseEntity.ok(response);
+//    }
 
     @GetMapping("/get/central-office")
     @PreAuthorize("hasAuthority('OWNER')")
@@ -259,6 +278,7 @@ public class UserController {
         ApiResponseDto<List<FactoryProductStockResponseDto>> response = plantHeadService.getLowStockProducts();
         return ResponseEntity.ok(response);
     }
+
 /// get factory details controller for owner
 @GetMapping("/factory/details")
 @PreAuthorize("hasAnyAuthority('OWNER','PLANT_HEAD')")

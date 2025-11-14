@@ -1,5 +1,6 @@
 package com.project.supply.chain.management.specifications;
 
+import com.project.supply.chain.management.constants.Expensive;
 import com.project.supply.chain.management.constants.ToolOrProductRequestStatus;
 import com.project.supply.chain.management.entity.ToolRequest;
 import com.project.supply.chain.management.entity.ToolRequestItem;
@@ -48,6 +49,23 @@ public class ToolRequestSpecifications {
                 // Chief Supervisor should see only non-expensive tools (NO)
                 return cb.equal(toolJoin.get("isExpensive"), com.project.supply.chain.management.constants.Expensive.NO);
             }
+        };
+    }
+
+    public static Specification<ToolRequest> hasExpensiveToolsOnly() {
+        return (root, query, cb) -> {
+            query.distinct(true); // avoid duplicates
+
+            Join<ToolRequest, ToolRequestItem> items = root.join("toolItems");
+            return cb.equal(items.get("tool").get("isExpensive"), Expensive.YES);
+        };
+    }
+    public static Specification<ToolRequest> hasNormalToolsOnly() {
+        return (root, query, cb) -> {
+            query.distinct(true); // avoids duplicate rows
+
+            Join<ToolRequest, ToolRequestItem> items = root.join("toolItems");
+            return cb.equal(items.get("tool").get("isExpensive"), Expensive.NO);
         };
     }
 

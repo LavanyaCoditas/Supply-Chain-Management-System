@@ -1,9 +1,8 @@
 package com.project.supply.chain.management.Controllers;
 
+import com.project.supply.chain.management.ServiceInterfaces.ProductRestockRequestService;
 import com.project.supply.chain.management.ServiceInterfaces.ProductService;
-import com.project.supply.chain.management.dto.AddProductDto;
-import com.project.supply.chain.management.dto.ApiResponseDto;
-import com.project.supply.chain.management.dto.ProductResponseDto;
+import com.project.supply.chain.management.dto.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
@@ -17,6 +16,8 @@ public class ProductController
 {
     @Autowired
     private ProductService productService;
+    @Autowired
+    ProductRestockRequestService productRestockRequestService;
 
     @PostMapping(value = "/upload", consumes = {"multipart/form-data"})
     public ResponseEntity<ApiResponseDto<ProductResponseDto>> uploadProduct(
@@ -54,6 +55,27 @@ public class ProductController
         return ResponseEntity.ok(response);
     }
 
+    // Chief Officer creates restock request
+    @PreAuthorize("hasAuthority('CENTRAL_OFFICE')")
+    @PostMapping("/restock-request/create")
+    public ResponseEntity<ApiResponseDto<ProductRestockRequestDto>> createRestockRequest(
+            @RequestBody CreateRestockRequestDto dto) {
+        ApiResponseDto<ProductRestockRequestDto> response = productRestockRequestService.createRestockRequest(dto);
+        return ResponseEntity.ok(response);
+    }
+
+//    @PutMapping("/handle/request/{requestId}")
+//    @PreAuthorize("hasAnyAuthority('PLANT_HEAD','CHIEF_SUPERVISOR')")
+//    public ResponseEntity<ApiResponseDto<String>> handleToolRequest(
+//            @PathVariable Long requestId,
+//            @RequestParam boolean approve,
+//            @RequestParam(required = false) String reason) {
+//
+//        ApiResponseDto<String> response =
+//                toolRequestService.handleToolRequest(requestId, approve, reason);
+//
+//        return ResponseEntity.ok(response);
+//    }
 
 
 

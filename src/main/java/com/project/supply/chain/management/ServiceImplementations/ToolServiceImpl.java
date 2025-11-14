@@ -63,6 +63,8 @@ public class ToolServiceImpl implements ToolService {
         tool.setIsExpensive(dto.getIsExpensive());
         tool.setThreshold(dto.getThreshold());
         tool.setIsActive(Account_Status.ACTIVE);
+        tool.setCreatedAt(LocalDateTime.now());
+        tool.setUpdatedAt(LocalDateTime.now());
 
         toolRepository.save(tool);
 
@@ -74,6 +76,7 @@ public class ToolServiceImpl implements ToolService {
                 tool.getIsExpensive(),
                 tool.getThreshold(),
                 tool.getImageUrl()
+
         );
 
         return new ApiResponseDto<>(true, "Tool created successfully", response);
@@ -135,7 +138,7 @@ public class ToolServiceImpl implements ToolService {
         tool.setType(dto.getType());
         tool.setIsExpensive(dto.getIsExpensive());
         tool.setThreshold(dto.getThreshold());
-        tool.setUpdatedAt(LocalDateTime.now());
+//        tool.setUpdatedAt(LocalDateTime.now());
 
         toolRepository.save(tool);
 

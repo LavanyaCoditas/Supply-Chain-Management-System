@@ -8,6 +8,7 @@ import jakarta.persistence.*;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+//
 public class FactoriesInventoryStock {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

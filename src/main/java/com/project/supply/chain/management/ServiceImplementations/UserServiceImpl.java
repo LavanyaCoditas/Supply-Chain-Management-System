@@ -1,6 +1,7 @@
 package com.project.supply.chain.management.ServiceImplementations;
 
 import com.cloudinary.Cloudinary;
+import com.project.supply.chain.management.Repositories.UserFactoryMappingRepository;
 import com.project.supply.chain.management.Repositories.UserRepository;
 import com.project.supply.chain.management.ServiceInterfaces.UserService;
 import com.project.supply.chain.management.constants.Account_Status;
@@ -8,6 +9,7 @@ import com.project.supply.chain.management.constants.Role;
 import com.project.supply.chain.management.dto.*;
 import com.project.supply.chain.management.entity.User;
 
+import com.project.supply.chain.management.entity.UserFactoryMapping;
 import com.project.supply.chain.management.util.AuthUtil;
 import com.project.supply.chain.management.specifications.UserSpecifications;
 import jakarta.transaction.Transactional;
@@ -25,6 +27,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -36,6 +39,8 @@ public class UserServiceImpl implements UserService {
     AuthUtil authUtil;
     @Autowired
     private Cloudinary cloudinary;
+    @Autowired
+    UserFactoryMappingRepository userFactoryMappingRepository;
 
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
@@ -85,26 +90,50 @@ public class UserServiceImpl implements UserService {
 
     //get all employees with filter and search
     @Override
-    public ApiResponseDto<Page<UserListDto>> getAllEmployees(String search, String role, Long factoryId, int page, int size) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by("username").ascending());
+    public ApiResponseDto<Page<UserListDto>> getAllEmployees(
+            String search, String role, Long factoryId,
+            int page, int size, String sortBy, String sortDir) {
+
+        // 🔹 Sorting logic
+        Sort sort = sortDir.equalsIgnoreCase("desc")
+                ? Sort.by(sortBy).descending()
+                : Sort.by(sortBy).ascending();
+
+        Pageable pageable = PageRequest.of(page, size, sort);
+
         Specification<User> spec = UserSpecifications.withFilters(search, role, factoryId);
 
         Page<User> usersPage = userRepository.findAll(spec, pageable);
 
-        Page<UserListDto> userDtos = usersPage.map(user ->
-                new UserListDto(
-                        user.getId(),
-                        user.getUsername(),
-                        user.getEmail(),
-                        user.getRole(),
-                        user.getIsActive(),
-                        user.getImg(),
-                        user.getPhone()
-                )
-        );
+        Page<UserListDto> userDtos = usersPage.map(user -> {
+
+            // Find factory for user
+            Optional<UserFactoryMapping> mapping = userFactoryMappingRepository.findByUser(user);
+
+            Long mappedFactoryId = null;
+            String mappedFactoryName = null;
+
+            if (mapping.isPresent()) {
+                mappedFactoryId = mapping.get().getFactory().getId();
+                mappedFactoryName = mapping.get().getFactory().getName();
+            }
+
+            return new UserListDto(
+                    user.getId(),
+                    user.getUsername(),
+                    user.getEmail(),
+                    user.getRole(),
+                    user.getIsActive(),
+                    user.getImg(),
+                    user.getPhone(),
+                    mappedFactoryId,
+                    mappedFactoryName
+            );
+        });
 
         return new ApiResponseDto<>(true, "Employees fetched successfully", userDtos);
     }
+
 
     @Override
     public ApiResponseDto<ProfileResponseDto> getProfile(String email) {

@@ -85,7 +85,7 @@ public class ToolController {
         return ResponseEntity.ok(response);
     }
     @GetMapping("/get/all/tools")
-    @PreAuthorize("hasAuthority('OWNER')")
+    @PreAuthorize("hasAnyAuthority('OWNER','PLANT_HEAD')")
     public ResponseEntity<ApiResponseDto<List<GetToolDto>>> getAllToolsForOwner(
             @RequestParam(required = false) String searchName,
             @RequestParam(required = false) String categoryName,
@@ -117,43 +117,42 @@ public class ToolController {
         return ResponseEntity.ok(toolRequestService.requestTool(dto));
     }
 
-    @PutMapping("handle/request/{id}/")
-    @PreAuthorize("hasAnyAuthority('PLANT_HEAD','CHIEF_SUPERVISOR')")
-    public ResponseEntity<ApiResponseDto<String>> handleRequest(
-            @PathVariable Long id,
-            @RequestParam boolean approve,
-            @RequestParam(required = false) String reason) {
-        return ResponseEntity.ok(toolRequestService.handleToolRequest(id, approve, reason));
-    }
-
-
-
-    @GetMapping("/pending")
-    @PreAuthorize("hasAnyAuthority('PLANT_HEAD','CHIEF_SUPERVISOR')")
-    public ResponseEntity<ApiResponseDto<List<GetToolRequestDto>>> getPendingRequests(
-            @RequestParam(required = false) String searchWorker,
-            @RequestParam(required = false) String searchTool,
-            @RequestParam(required = false) ToolOrProductRequestStatus status,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "createdAt") String sortBy,
-            @RequestParam(defaultValue = "desc") String sortDir
-    ) {
-        ApiResponseDto<List<GetToolRequestDto>> response = toolRequestService.getPendingRequestsForApprover(
-                searchWorker, searchTool, status, page, size, sortBy, sortDir
-        );
-        return ResponseEntity.ok(response);
-    }
-
-    @PutMapping("/handle/request/{requestId}")
+    @PutMapping("/handle/{requestId}")
     @PreAuthorize("hasAnyAuthority('PLANT_HEAD','CHIEF_SUPERVISOR')")
     public ResponseEntity<ApiResponseDto<String>> handleToolRequest(
             @PathVariable Long requestId,
             @RequestParam boolean approve,
             @RequestParam(required = false) String reason) {
-        ApiResponseDto<String> response = toolRequestService.handleToolRequest(requestId, approve, reason);
-        return ResponseEntity.ok(response);
+
+        return ResponseEntity.ok(toolRequestService.handleToolRequest(requestId, approve, reason));
     }
+
+//    @GetMapping("/pending")
+//    @PreAuthorize("hasAnyAuthority('PLANT_HEAD','CHIEF_SUPERVISOR')")
+//    public ResponseEntity<ApiResponseDto<List<GetToolRequestDto>>> getPendingRequests(
+//            @RequestParam(required = false) String searchWorker,
+//            @RequestParam(required = false) String searchTool,
+//            @RequestParam(required = false) ToolOrProductRequestStatus status,
+//            @RequestParam(defaultValue = "0") int page,
+//            @RequestParam(defaultValue = "10") int size,
+//            @RequestParam(defaultValue = "createdAt") String sortBy,
+//            @RequestParam(defaultValue = "desc") String sortDir
+//    ) {
+//        ApiResponseDto<List<GetToolRequestDto>> response = toolRequestService.getPendingRequestsForApprover(
+//                searchWorker, searchTool, status, page, size, sortBy, sortDir
+//        );
+//        return ResponseEntity.ok(response);
+//    }
+//
+//    @PutMapping("/handle/request/{requestId}")
+//    @PreAuthorize("hasAnyAuthority('PLANT_HEAD','CHIEF_SUPERVISOR')")
+//    public ResponseEntity<ApiResponseDto<String>> handleToolRequest(
+//            @PathVariable Long requestId,
+//            @RequestParam boolean approve,
+//            @RequestParam(required = false) String reason) {
+//        ApiResponseDto<String> response = toolRequestService.handleToolRequest(requestId, approve, reason);
+//        return ResponseEntity.ok(response);
+//    }
 }
 
 //STORAGE CRUD

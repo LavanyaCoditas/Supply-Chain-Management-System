@@ -18,5 +18,9 @@ import lombok.NoArgsConstructor;
         private Account_Status isActive;
         private String img;
         private Long phone;
+        private Long factoryId;
+        private String factoryName;
+
+
     }
 

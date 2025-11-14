@@ -9,16 +9,8 @@ import java.util.List;
 
 public interface ToolRequestService {
     ApiResponseDto<String> requestTool(ToolRequestDto dto);
-   ApiResponseDto<String> handleToolRequest(Long requestId, boolean approve, String reason);
-    ApiResponseDto<List<GetToolRequestDto>> getPendingRequestsForApprover(
-            String searchWorker,
-            String searchTool,
-            ToolOrProductRequestStatus status,
-            int page,
-            int size,
-            String sortBy,
-            String sortDir
-    );
+
+ApiResponseDto<String> handleToolRequest(Long requestId, boolean approve, String reason);
 
 
 }
