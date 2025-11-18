@@ -7,7 +7,9 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class UpdateProductStockDto {
+public class CentralOfficeInventoryDto {
     private Long productId;
-    private Integer quantity;
+    private String productName;
+    private Long quantity;
+    private Long totalReceived;
 }

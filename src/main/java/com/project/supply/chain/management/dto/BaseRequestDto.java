@@ -7,7 +7,8 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class UpdateProductStockDto {
-    private Long productId;
-    private Integer quantity;
+public class BaseRequestDto {
+    private Integer page = 0;
+    private Integer size = 20;
+    private String sort;
 }

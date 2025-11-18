@@ -22,7 +22,7 @@ public class ProductRestockRequestDto {
     private Long requestedByUserId;
     private String requestedByUserName;
 
-    private Long managerUserId;
-    private String managerUserName;
     private LocalDateTime completedAt;
+    private Integer currentFactoryStock;
+    private Long centralOfficeStock;
 }

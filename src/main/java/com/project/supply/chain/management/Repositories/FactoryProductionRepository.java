@@ -25,4 +25,5 @@ public interface FactoryProductionRepository extends JpaRepository<FactoryProduc
     List<FactoryProductionSummaryDto> getFactoryProductionSummary();
     List<FactoryProduction> findByFactory(Factory factory);
 
+    Optional<FactoryProduction> findByFactoryAndProduct(Factory factory, Product product);
 }

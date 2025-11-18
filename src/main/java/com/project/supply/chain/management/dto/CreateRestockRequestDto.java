@@ -1,14 +1,14 @@
 package com.project.supply.chain.management.dto;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Getter
-@Setter
 public class CreateRestockRequestDto {
-    private Long factoryId;   // 🔁 changed from String factoryName
+    private Long factoryId;
     private Long productId;
     private Integer qtyRequested;
 }
