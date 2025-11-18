@@ -18,17 +18,16 @@ public class UserFactoryMapping {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
      private  Long id;
 
-    @ManyToOne
-//    @MapsId("userId")
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "factory_id")
     private Factory factory;
 
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "bay_id")
     private Bay bayId;
 

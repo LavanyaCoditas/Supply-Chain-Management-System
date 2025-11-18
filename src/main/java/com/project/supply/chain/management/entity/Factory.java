@@ -16,22 +16,31 @@ public class Factory {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false)
     private String city;
+
+    @Column(nullable = false)
     private String address;
+    @Column(nullable = false)
     private String name;
 
-    @ManyToOne @JoinColumn(name = "planthead_id")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "planthead_id")
     private User planthead;
 
-    @ManyToOne @JoinColumn(name = "central_office_id")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "central_office_id")
     private CentralOffice centralOffice;
 
     @Column(name = "is_active")
     @Enumerated(EnumType.STRING)
     private Account_Status isActive;
 
+
+    @Column
     private LocalDateTime createdAt = LocalDateTime.now();
 
+    @Column
     private LocalDateTime updatedAt = LocalDateTime.now();
 
     @OneToMany(mappedBy = "factory")

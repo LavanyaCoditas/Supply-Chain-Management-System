@@ -1,73 +1,65 @@
 package com.project.supply.chain.management.specifications;
 
 import com.project.supply.chain.management.constants.Expensive;
-import com.project.supply.chain.management.constants.ToolOrProductRequestStatus;
+import com.project.supply.chain.management.entity.Tool;
 import com.project.supply.chain.management.entity.ToolRequest;
 import com.project.supply.chain.management.entity.ToolRequestItem;
+import com.project.supply.chain.management.entity.User;
 import jakarta.persistence.criteria.Join;
-import jakarta.persistence.criteria.JoinType;
 import org.springframework.data.jpa.domain.Specification;
 
 public class ToolRequestSpecifications {
 
-    // ✅ Filter by status
-    public static Specification<ToolRequest> hasStatus(ToolOrProductRequestStatus status) {
-        return (root, query, cb) -> cb.equal(root.get("status"), status);
+    public static Specification<ToolRequest> filterByStatus(String status) {
+        return (root, query, builder) ->
+                builder.equal(root.get("status"), status.toUpperCase());
     }
 
-    // ✅ Search by worker name
-    public static Specification<ToolRequest> searchByWorkerName(String workerName) {
-        return (root, query, cb) -> {
-            if (workerName == null || workerName.isBlank()) return cb.conjunction();
-            Join<Object, Object> workerJoin = root.join("worker", JoinType.LEFT);
-            return cb.like(cb.lower(workerJoin.get("username")), "%" + workerName.toLowerCase() + "%");
-        };
-    }
-
-    // ✅ Search by tool name (via ToolRequestItem → Tool)
     public static Specification<ToolRequest> searchByToolName(String toolName) {
-        return (root, query, cb) -> {
-            if (toolName == null || toolName.isBlank()) return cb.conjunction();
-            Join<Object, ToolRequestItem> itemJoin = root.join("toolItems", JoinType.LEFT);
-            Join<Object, Object> toolJoin = itemJoin.join("tool", JoinType.LEFT);
-            query.distinct(true);
-            return cb.like(cb.lower(toolJoin.get("name")), "%" + toolName.toLowerCase() + "%");
-        };
-    }
-
-    // ✅ Filter by "isExpensive" using toolItems → tool
-    public static Specification<ToolRequest> isExpensive(boolean isPlantHead) {
-        return (root, query, cb) -> {
-            Join<Object, Object> itemJoin = root.join("toolItems", JoinType.LEFT);
-            Join<Object, Object> toolJoin = itemJoin.join("tool", JoinType.LEFT);
-            query.distinct(true);
-
-            if (isPlantHead) {
-                // Plant Head should see only expensive tools (YES)
-                return cb.equal(toolJoin.get("isExpensive"), com.project.supply.chain.management.constants.Expensive.YES);
-            } else {
-                // Chief Supervisor should see only non-expensive tools (NO)
-                return cb.equal(toolJoin.get("isExpensive"), com.project.supply.chain.management.constants.Expensive.NO);
-            }
-        };
-    }
-
-    public static Specification<ToolRequest> hasExpensiveToolsOnly() {
-        return (root, query, cb) -> {
-            query.distinct(true); // avoid duplicates
-
+        return (root, query, builder) -> {
             Join<ToolRequest, ToolRequestItem> items = root.join("toolItems");
-            return cb.equal(items.get("tool").get("isExpensive"), Expensive.YES);
+            Join<ToolRequestItem, Tool> tool = items.join("tool");
+
+            return builder.like(builder.lower(tool.get("name")), "%" + toolName.toLowerCase() + "%");
         };
     }
-    public static Specification<ToolRequest> hasNormalToolsOnly() {
-        return (root, query, cb) -> {
-            query.distinct(true); // avoids duplicate rows
 
+    public static Specification<ToolRequest> searchByWorkerName(String name) {
+        return (root, query, builder) -> {
+            Join<ToolRequest, User> worker = root.join("worker");
+            return builder.like(builder.lower(worker.get("name")), "%" + name.toLowerCase() + "%");
+        };
+    }
+
+    public static Specification<ToolRequest> filterByToolType(String toolType) {
+        return (root, query, builder) -> {
             Join<ToolRequest, ToolRequestItem> items = root.join("toolItems");
-            return cb.equal(items.get("tool").get("isExpensive"), Expensive.NO);
+            Join<ToolRequestItem, Tool> tool = items.join("tool");
+
+            return builder.equal(tool.get("type"), toolType.toUpperCase());
         };
     }
 
+    public static Specification<ToolRequest> onlyExpensiveRequests() {
+        return (root, query, builder) -> {
+            Join<ToolRequest, ToolRequestItem> items = root.join("toolItems");
+            Join<ToolRequestItem, Tool> tool = items.join("tool");
 
+            return builder.equal(tool.get("isExpensive"), Expensive.YES);
+        };
+    }
+
+    public static Specification<ToolRequest> onlyNormalRequests() {
+        return (root, query, builder) -> {
+            Join<ToolRequest, ToolRequestItem> items = root.join("toolItems");
+            Join<ToolRequestItem, Tool> tool = items.join("tool");
+
+            return builder.equal(tool.get("isExpensive"), Expensive.NO);
+        };
+    }
+
+    public static Specification<ToolRequest> filterByWorker(User worker) {
+        return (root, query, builder) ->
+                builder.equal(root.get("worker"), worker);
+    }
 }

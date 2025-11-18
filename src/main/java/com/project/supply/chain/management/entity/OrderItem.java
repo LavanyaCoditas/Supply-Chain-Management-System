@@ -1,5 +1,6 @@
 package com.project.supply.chain.management.entity;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Positive;
 import lombok.*;
 import java.math.BigDecimal;
 
@@ -13,9 +14,15 @@ public class OrderItem {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne @JoinColumn(name = "product_id")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "product_id")
     private Product product;
 
+    @Column
+    @Positive(message = "quantity must be positive")
     private Integer quantity;
+
+    @Column
+    @Positive(message = "price must be positive")
     private BigDecimal pricePerUnit;
 }

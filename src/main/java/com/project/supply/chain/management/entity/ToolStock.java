@@ -1,6 +1,7 @@
 package com.project.supply.chain.management.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Positive;
 import lombok.*;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -27,13 +28,16 @@ public class ToolStock {
     private Tool tool;
 
     @Column(name = "total_quantity", nullable = false)
+    @Positive
     private Long totalQuantity = 0L;
 
     @Column(name = "available_quantity", nullable = false)
+    @Positive
     private Long availableQuantity = 0L;
 
 
     @Column(name = "issued_quantity", nullable = false)
+    @Positive
     private Long issuedQuantity = 0L;
 
     @LastModifiedDate

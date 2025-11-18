@@ -22,7 +22,6 @@ public class ProductRestockRequestDto {
     private Long requestedByUserId;
     private String requestedByUserName;
 
-    // NEW: Factory manager information (from factory assignment)
     private Long managerUserId;
     private String managerUserName;
     private LocalDateTime completedAt;

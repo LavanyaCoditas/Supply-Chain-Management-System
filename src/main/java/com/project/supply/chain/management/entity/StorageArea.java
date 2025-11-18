@@ -1,6 +1,7 @@
 package com.project.supply.chain.management.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Positive;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -16,20 +17,35 @@ public class StorageArea {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne @JoinColumn(name = "factory_id")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "factory_id")
     private Factory factory;
 
-    @ManyToOne @JoinColumn(name = "tool_id")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "tool_id")
     private Tool tool;
 
     @OneToMany(mappedBy = "storageArea", cascade = CascadeType.ALL)
     private List<ToolStorageMapping> toolStorageMappings;
 
+    @Column
+    @Positive
     private Integer rowNum;
+
+    @Column
+    @Positive
     private Integer colNum;
+
+    @Column
+    @Positive
     private Integer stack;
+
+    @Column
     private String bucket;
+    @Column
     private LocalDateTime createdAt;
+
+    @Column
     private LocalDateTime updatedAt;
 
 }

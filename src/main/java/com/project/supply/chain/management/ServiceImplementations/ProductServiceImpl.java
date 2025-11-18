@@ -8,7 +8,9 @@ import com.project.supply.chain.management.constants.Role;
 import com.project.supply.chain.management.dto.*;
 import com.project.supply.chain.management.entity.*;
 import com.project.supply.chain.management.specifications.ProductSpecifications;
+import com.project.supply.chain.management.util.ApplicationUtils;
 import com.project.supply.chain.management.util.CloudinaryConfig;
+import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -24,26 +26,22 @@ import java.util.Map;
 import java.util.Optional;
 
 @Service
-public class ProductServiceImpl implements ProductService {
+@AllArgsConstructor
+public class ProductServiceImpl implements ProductService
+{
+    private final ApplicationUtils appUtils;
 
+    private final ProductRepository productRepository;
 
-    @Autowired
-    private ProductRepository productRepository;
-    @Autowired
-    private ProductCategoryRepository categoryRepository;
-@Autowired
-    CloudinaryConfig cloudinaryConfig;
-@Autowired
-FactoryInventoryStockRepository factoryInventoryStockRepository;
-@Autowired
-    UserRepository userRepository;
-@Autowired
-UserFactoryMappingRepository userFactoryMappingRepository;
+    private final ProductCategoryRepository categoryRepository;
+
+    private final CloudinaryConfig cloudinaryConfig;
+
 
     @Override
     public ApiResponseDto<ProductResponseDto> uploadProductWithImage(AddProductDto productDto, MultipartFile imageFile) {
         try {
-            // 🚫 Step 1: Check for duplicate product name
+
             Optional<Product> existingProduct = productRepository.findByNameIgnoreCase(productDto.getName());
             if (existingProduct.isPresent()) {
                 return new ApiResponseDto<>(false,
@@ -51,17 +49,16 @@ UserFactoryMappingRepository userFactoryMappingRepository;
                         null);
             }
 
-            // ✅ Step 2: Upload image to Cloudinary
             Cloudinary cloudinary = cloudinaryConfig.cloudinary();
             Map uploadResult = cloudinary.uploader().upload(imageFile.getBytes(),
                     ObjectUtils.asMap("folder", "products"));
             String imageUrl = (String) uploadResult.get("secure_url");
 
-            // ✅ Step 3: Get category
+            //  Get category
             ProductCategory category = categoryRepository.findById(productDto.getCategoryId())
                     .orElseThrow(() -> new RuntimeException("Category not found"));
 
-            // ✅ Step 4: Create and save product
+            // Create and save product
             Product product = new Product();
             product.setName(productDto.getName().trim());
             product.setProdDescription(productDto.getProdDescription());
@@ -74,7 +71,7 @@ UserFactoryMappingRepository userFactoryMappingRepository;
 
             Product savedProduct = productRepository.save(product);
 
-            // ✅ Step 5: Prepare response DTO
+            // Prepare response DTO
             ProductResponseDto responseDto = new ProductResponseDto(
                     savedProduct.getId(),
                     savedProduct.getName(),
@@ -99,10 +96,10 @@ UserFactoryMappingRepository userFactoryMappingRepository;
     public ApiResponseDto<Page<ProductResponseDto>> getAllProducts(int page, int size, String search, String categoryName) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("id").descending());
 
-        // Start with an "empty" Specification and include only active products
+        // include only active products
         Specification<Product> spec = (root, query, cb) -> cb.equal(root.get("isActive"), Account_Status.ACTIVE);
 
-        // Dynamically combine additional filters
+        // combine additional filters
         if (search != null && !search.isBlank()) {
             spec = spec.and(ProductSpecifications.searchProducts(search));
         }
@@ -132,9 +129,7 @@ UserFactoryMappingRepository userFactoryMappingRepository;
 
     @Override
     public ApiResponseDto<String> softDeleteProduct(Long productId) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String username = authentication.getName();
-        User loggedInUser = userRepository.findByEmail(username);
+       User loggedInUser=appUtils.getUser(appUtils.getLoggedInUserEmail());
 
                 if(loggedInUser ==null && loggedInUser.getRole()!= Role.OWNER)
                 {

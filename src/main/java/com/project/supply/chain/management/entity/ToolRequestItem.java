@@ -1,6 +1,7 @@
 package com.project.supply.chain.management.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Positive;
 import lombok.*;
 
 @Entity
@@ -24,5 +25,7 @@ public class ToolRequestItem {
     @JoinColumn(name = "tool_id", nullable = false)
     private Tool tool;
 
+    @Positive
+    @Column
     private Integer quantity;
 }

@@ -5,6 +5,7 @@ import com.project.supply.chain.management.ServiceInterfaces.ToolRequestService;
 import com.project.supply.chain.management.ServiceInterfaces.ToolService;
 import com.project.supply.chain.management.constants.ToolOrProductRequestStatus;
 import com.project.supply.chain.management.dto.*;
+import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -20,20 +21,21 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/tool")
-public class ToolController {
-    @Autowired
-    ToolService toolService;
-    @Autowired
-    ToolCategoryService toolCategoryService;
-    @Autowired
-    ToolRequestService toolRequestService;
+@AllArgsConstructor
+public class ToolController
+{
+
+    private final ToolService toolService;
+
+    private final ToolCategoryService toolCategoryService;
+
+   private final ToolRequestService toolRequestService;
 
 
     @PostMapping("/create/tool-category")
     @PreAuthorize("hasAnyAuthority('OWNER', 'PLANT_HEAD')")
-    public ResponseEntity<ApiResponseDto<ToolCategoryDto>> createToolCategory(
-            @RequestBody AddToolCategoryDto dto
-    ) {
+    public ResponseEntity<ApiResponseDto<ToolCategoryDto>> createToolCategory(@RequestBody AddToolCategoryDto dto)
+    {
         ApiResponseDto<ToolCategoryDto> response = toolCategoryService.addToolCategory(dto);
         return ResponseEntity.ok(response);
     }
@@ -84,6 +86,7 @@ public class ToolController {
         ApiResponseDto<ToolResponseDto> response = toolService.updateTool(toolId, dto);
         return ResponseEntity.ok(response);
     }
+
     @GetMapping("/get/all/tools")
     @PreAuthorize("hasAnyAuthority('OWNER','PLANT_HEAD')")
     public ResponseEntity<ApiResponseDto<List<GetToolDto>>> getAllToolsForOwner(
@@ -126,50 +129,4 @@ public class ToolController {
 
         return ResponseEntity.ok(toolRequestService.handleToolRequest(requestId, approve, reason));
     }
-
-//    @GetMapping("/pending")
-//    @PreAuthorize("hasAnyAuthority('PLANT_HEAD','CHIEF_SUPERVISOR')")
-//    public ResponseEntity<ApiResponseDto<List<GetToolRequestDto>>> getPendingRequests(
-//            @RequestParam(required = false) String searchWorker,
-//            @RequestParam(required = false) String searchTool,
-//            @RequestParam(required = false) ToolOrProductRequestStatus status,
-//            @RequestParam(defaultValue = "0") int page,
-//            @RequestParam(defaultValue = "10") int size,
-//            @RequestParam(defaultValue = "createdAt") String sortBy,
-//            @RequestParam(defaultValue = "desc") String sortDir
-//    ) {
-//        ApiResponseDto<List<GetToolRequestDto>> response = toolRequestService.getPendingRequestsForApprover(
-//                searchWorker, searchTool, status, page, size, sortBy, sortDir
-//        );
-//        return ResponseEntity.ok(response);
-//    }
-//
-//    @PutMapping("/handle/request/{requestId}")
-//    @PreAuthorize("hasAnyAuthority('PLANT_HEAD','CHIEF_SUPERVISOR')")
-//    public ResponseEntity<ApiResponseDto<String>> handleToolRequest(
-//            @PathVariable Long requestId,
-//            @RequestParam boolean approve,
-//            @RequestParam(required = false) String reason) {
-//        ApiResponseDto<String> response = toolRequestService.handleToolRequest(requestId, approve, reason);
-//        return ResponseEntity.ok(response);
-//    }
 }
-
-//STORAGE CRUD
-//    @PostMapping("/create/storage-area")
-//    @PreAuthorize("hasAuthority('PLANT_HEAD')")
-//    public ResponseEntity<ApiResponseDto<String>> createStorageArea(@RequestBody CreateStorageAreaDto dto) {
-//        ApiResponseDto<String> response = toolService.createStorageArea(dto);
-//        return ResponseEntity.ok(response);
-//    }
-//    @GetMapping("/get/storage-areas")
-//    @PreAuthorize("hasAnyAuthority('PLANT_HEAD', 'CHIEF_SUPERVISOR')")
-//    public ApiResponseDto<List<StorageAreaResponseDto>> getAllStorageAreas() {
-//        return toolService.getAllStorageAreasForPlantHead();
-//    }
-//    @PostMapping("/factory/get-tool")
-//    public ResponseEntity<ApiResponseDto<ToolResponseDto>> assignToolToFactory(
-//            @RequestBody AssignToolToFactoryDto dto) {
-//        return ResponseEntity.ok(toolService.assignToolToFactory(dto));
-//    }
-

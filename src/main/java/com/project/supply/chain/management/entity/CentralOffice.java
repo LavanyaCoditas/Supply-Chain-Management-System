@@ -16,12 +16,13 @@ public class CentralOffice {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long centralOfficeId;
 
+    @Column(nullable = false)
     private String location;
 
-    @OneToMany(mappedBy = "centralOffice")
+    @OneToMany(mappedBy = "centralOffice", fetch = FetchType.LAZY)
     private List<Factory> factories;
 
-    @OneToMany(mappedBy = "office")
+    @OneToMany(mappedBy = "office", fetch = FetchType.LAZY)
     private List<UserCentralOfficeMapping> userMappings;
 }
 

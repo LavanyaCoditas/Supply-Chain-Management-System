@@ -2,6 +2,7 @@ package com.project.supply.chain.management.entity;
 
 import com.project.supply.chain.management.constants.ToolOrProductRequestStatus;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Positive;
 import lombok.*;
 import java.time.LocalDateTime;
 
@@ -13,24 +14,28 @@ public class ToolRestockRequest {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "restocked_by")
     private User restockedBy;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "tool_id")
     private Tool tool;
 
+    @Positive(message = "tool quantity entered must be positive")
     private Integer toolQty;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "factory_id")
     private Factory factory;
 
+    @Column
     private LocalDateTime createdAt = LocalDateTime.now();
 
+    @Column
     @Enumerated(EnumType.STRING)
     private ToolOrProductRequestStatus status = ToolOrProductRequestStatus.PENDING;
 
+    @Column
     private LocalDateTime updatedAt = LocalDateTime.now();
 }

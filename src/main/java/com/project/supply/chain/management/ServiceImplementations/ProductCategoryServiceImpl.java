@@ -6,6 +6,7 @@ import com.project.supply.chain.management.dto.ApiResponseDto;
 import com.project.supply.chain.management.dto.ProductCategoryDto;
 import com.project.supply.chain.management.dto.ProductCategoryResponseDto;
 import com.project.supply.chain.management.entity.ProductCategory;
+import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -13,12 +14,11 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 @Service
-
+@AllArgsConstructor
 public class ProductCategoryServiceImpl implements ProductCategoryService {
-@Autowired
-    private ProductCategoryRepository categoryRepository;
 
-    @Override
+    private final ProductCategoryRepository categoryRepository;
+
     public ApiResponseDto<Void> createProductCategory(ProductCategoryDto productCategoryDto) {
 
 
@@ -56,15 +56,15 @@ public class ProductCategoryServiceImpl implements ProductCategoryService {
     }
     @Override
     public ApiResponseDto<List<ProductCategoryResponseDto>> getAllCategories(String sortBy, String sortDir) {
-        // ✅ Determine sort direction
+        //  Determine sort direction
         Sort sort = sortDir.equalsIgnoreCase("desc") ?
                 Sort.by(sortBy).descending() :
                 Sort.by(sortBy).ascending();
 
-        // ✅ Fetch categories from DB
+        //  Fetch categories from DB
         List<ProductCategory> categories = categoryRepository.findAll(sort);
 
-        // ✅ Convert entities → DTOs (no nested products)
+        //  Convert entities → DTOs (no nested products)
         List<ProductCategoryResponseDto> categoryDtos = categories.stream()
                 .map(category -> new ProductCategoryResponseDto(
                         category.getId(),
@@ -74,7 +74,7 @@ public class ProductCategoryServiceImpl implements ProductCategoryService {
                 ))
                 .toList();
 
-        // ✅ Return clean response
+        //  Return clean response
         return new ApiResponseDto<>(true, "Categories fetched successfully", categoryDtos);
     }
 
@@ -85,7 +85,6 @@ public class ProductCategoryServiceImpl implements ProductCategoryService {
         if (!categoryRepository.existsById(categoryId)) {
             return new ApiResponseDto<>(false, "Product category not found with ID: " + categoryId, null);
         }
-
 
         categoryRepository.deleteById(categoryId);
 

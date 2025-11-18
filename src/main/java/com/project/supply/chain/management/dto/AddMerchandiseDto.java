@@ -11,8 +11,8 @@ import lombok.NoArgsConstructor;
     public class AddMerchandiseDto {
         private String name;
 
-        private Long requiredPoints;
-        private Long availableQuantity;
+        private Integer requiredPoints;
+        private Integer availableQuantity;
 
 
 }

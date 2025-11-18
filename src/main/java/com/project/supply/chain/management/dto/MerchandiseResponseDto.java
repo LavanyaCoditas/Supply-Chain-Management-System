@@ -10,8 +10,8 @@ import lombok.NoArgsConstructor;
 public class MerchandiseResponseDto {
     private Long id;
     private String name;
-    private Long requiredPoints;
-    private Long availableQuantity;
+    private Integer requiredPoints;
+    private Integer availableQuantity;
     private String imageUrl;
 
 }

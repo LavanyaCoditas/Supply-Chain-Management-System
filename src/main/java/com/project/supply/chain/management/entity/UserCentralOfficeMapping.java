@@ -13,10 +13,12 @@ import lombok.*;
         @GeneratedValue(strategy = GenerationType.IDENTITY)
         private Long id;
 
-        @ManyToOne @JoinColumn(name = "user_id")
+        @ManyToOne(fetch = FetchType.LAZY)
+        @JoinColumn(name = "user_id")
         private User user;
 
-        @ManyToOne @JoinColumn(name = "office_id")
+        @ManyToOne(fetch = FetchType.LAZY)
+        @JoinColumn(name = "office_id")
         private CentralOffice office;
     }
 

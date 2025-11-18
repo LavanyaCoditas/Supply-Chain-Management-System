@@ -11,13 +11,13 @@ public class UserSpecifications {
         return (Root<User> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> {
             Predicate predicate = cb.conjunction();
 
-            // 🔹 Prevent duplicate rows when joining
+            // Prevent duplicate rows when joining
             query.distinct(true);
 
-            // 🔹 Join with UserFactoryMapping (userFactoryMappingRepository.findByUser(user) proves mapping exists)
+            // Join with UserFactoryMapping (userFactoryMappingRepository.findByUser(user) proves mapping exists)
             Join<User, UserFactoryMapping> mappingJoin = root.join("factoryMappings", JoinType.LEFT);
 
-            // 🔍 Search by username
+            // Search by username
             if (search != null && !search.isBlank()) {
                 String pattern = "%" + search.toLowerCase() + "%";
                 predicate = cb.and(predicate,
@@ -25,14 +25,14 @@ public class UserSpecifications {
                 );
             }
 
-            // 🔍 Filter by role
+            // Filter by role
             if (role != null && !role.isBlank()) {
                 predicate = cb.and(predicate,
                         cb.equal(root.get("role"), role)
                 );
             }
 
-            // 🔍 Filter by factory ID
+            // Filter by factory ID
             if (factoryId != null) {
                 predicate = cb.and(predicate,
                         cb.equal(mappingJoin.get("factory").get("id"), factoryId)

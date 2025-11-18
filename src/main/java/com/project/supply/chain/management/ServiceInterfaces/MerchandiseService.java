@@ -20,7 +20,7 @@ public interface MerchandiseService {
             String sort
     );
     ApiResponseDto<Void> softDeleteMerchandise(Long id);
-    ApiResponseDto<MerchandiseResponseDto> restockMerchandise(Long id, Long additionalQuantity);
+    ApiResponseDto<MerchandiseResponseDto> restockMerchandise(Long id, Integer additionalQuantity);
 
     ApiResponseDto<MerchandiseResponseDto> updateMerchandise(Long id, AddMerchandiseDto dto, MultipartFile imageFile) throws Exception;
 

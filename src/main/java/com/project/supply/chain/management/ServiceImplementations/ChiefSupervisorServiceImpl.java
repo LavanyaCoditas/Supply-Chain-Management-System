@@ -1,4 +1,3 @@
-// 📁 com.project.supply.chain.management.ServiceImplementations.ChiefSupervisorServiceImpl.java
 package com.project.supply.chain.management.ServiceImplementations;
 
 import com.project.supply.chain.management.Repositories.BayRepository;
@@ -11,6 +10,7 @@ import com.project.supply.chain.management.dto.*;
 import com.project.supply.chain.management.entity.Bay;
 import com.project.supply.chain.management.entity.User;
 import com.project.supply.chain.management.entity.UserFactoryMapping;
+import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -25,20 +25,19 @@ import static com.project.supply.chain.management.specifications.EmployeeSpecifi
 import static com.project.supply.chain.management.specifications.WorkerSpecifications.*;
 
 @Service
+@AllArgsConstructor
 public class ChiefSupervisorServiceImpl implements CheifSupervisorService {
 
-    @Autowired
-    EmailService emailService;
- @Autowired
-    BayRepository bayRepository;
-    @Autowired
-    private PasswordEncoder passwordEncoder;
 
-    @Autowired
-    private UserRepository userRepository;
+    private final EmailService emailService;
 
-    @Autowired
-    private UserFactoryMappingRepository userFactoryMappingRepository;
+    private final  BayRepository bayRepository;
+
+    private final  PasswordEncoder passwordEncoder;
+
+    private final  UserRepository userRepository;
+
+    private final  UserFactoryMappingRepository userFactoryMappingRepository;
 
     @Override
     public ApiResponseDto<WorkerResponseDto> addWorker(AddEmployeeDto dto) {
@@ -48,25 +47,25 @@ public class ChiefSupervisorServiceImpl implements CheifSupervisorService {
             throw new RuntimeException("Supervisor not found in context");
         }
 
-        // ✅ Check duplicate email
+        //  Check duplicate email
         if (userRepository.findByEmail(dto.getEmail()) != null) {
             return new ApiResponseDto<>(false, "User with this email already exists", null);
         }
 
-        // ✅ Get supervisor’s mapping
+        //  Get supervisor’s mapping
         UserFactoryMapping supervisorMapping = userFactoryMappingRepository.findByUser(supervisor)
                 .orElseThrow(() -> new RuntimeException("Supervisor is not mapped to any factory/bay"));
 
-        // ✅ Find selected Bay
+        //  Find selected Bay
         Bay selectedBay = bayRepository.findById(dto.getBayId())
                 .orElseThrow(() -> new RuntimeException("Selected bay not found"));
 
-        // ✅ Validate: Bay must belong to same factory as supervisor
+        //  Validate: Bay must belong to same factory as supervisor
         if (!selectedBay.getFactory().getId().equals(supervisorMapping.getFactory().getId())) {
             throw new RuntimeException("Selected bay does not belong to your factory");
         }
 
-        // ✅ Create new worker
+        //  Create new worker
         String defaultPassword = "default@123";
         User worker = new User();
         worker.setUsername(dto.getUsername());
@@ -78,7 +77,7 @@ public class ChiefSupervisorServiceImpl implements CheifSupervisorService {
 
         userRepository.save(worker);
 
-        // ✅ Create mapping for new worker
+        //  Create mapping for new worker
         UserFactoryMapping workerMapping = new UserFactoryMapping();
         workerMapping.setUser(worker);
         workerMapping.setFactory(supervisorMapping.getFactory());
@@ -86,7 +85,7 @@ public class ChiefSupervisorServiceImpl implements CheifSupervisorService {
         workerMapping.setAssignedRole(Role.WORKER);
         userFactoryMappingRepository.save(workerMapping);
 
-        // ✅ Prepare response
+        //  Prepare response
         WorkerResponseDto response = new WorkerResponseDto(
                 worker.getId(),
                 worker.getUsername(),
@@ -96,7 +95,7 @@ public class ChiefSupervisorServiceImpl implements CheifSupervisorService {
                 selectedBay.getName()
         );
 
-        // ✅ Send Email Notification to Worker
+        // Send Email Notification to Worker
         String loginUrl = "http://localhost:8080/login"; // or your frontend login URL
 
         String subject = "Welcome to Supply Chain System - Worker Account Created";
@@ -167,26 +166,26 @@ public class ChiefSupervisorServiceImpl implements CheifSupervisorService {
 
     @Override
     public ApiResponseDto<Void> softDeleteWorker(Long workerId) {
-        // ✅ Get logged-in supervisor
+        // Get logged-in supervisor
         String supervisorEmail = SecurityContextHolder.getContext().getAuthentication().getName();
         User supervisor = userRepository.findByEmail(supervisorEmail);
         if (supervisor == null) {
             throw new RuntimeException("Supervisor not found in context");
         }
 
-        // ✅ Find the worker
+        //  Find the worker
         User worker = userRepository.findById(workerId)
                 .orElseThrow(() -> new RuntimeException("Worker not found"));
 
-        // ✅ Update worker status
+        // Update worker status
         worker.setIsActive(Account_Status.IN_ACTIVE);
         userRepository.save(worker);
 
-        // ✅ Get supervisor’s mapping (for factory/bay context)
+        //  Get supervisor’s mapping (for factory/bay context)
         UserFactoryMapping supervisorMapping = userFactoryMappingRepository.findByUser(supervisor)
                 .orElseThrow(() -> new RuntimeException("Supervisor is not mapped to any factory/bay"));
 
-        // ✅ Get worker mapping (to fetch factory and bay info)
+        //  Get worker mapping (to fetch factory and bay info)
         UserFactoryMapping workerMapping = userFactoryMappingRepository.findByUser(worker)
                 .orElse(null);
 
@@ -198,7 +197,7 @@ public class ChiefSupervisorServiceImpl implements CheifSupervisorService {
                 ? workerMapping.getBayId().getName()
                 : "N/A";
 
-        // ✅ Prepare Email Notification
+        // Prepare Email Notification
         String subject = "Notice: Removal from Worker Position - Supply Chain System";
 
         String body = String.format("""
@@ -224,7 +223,7 @@ public class ChiefSupervisorServiceImpl implements CheifSupervisorService {
                 supervisor.getEmail()
         );
 
-        // ✅ Send Email
+        //  Send Email
         emailService.sendEmail(worker.getEmail(), subject, body);
 
         return new ApiResponseDto<>(true, "Worker deleted successfully and email sent", null);

@@ -2,7 +2,8 @@ package com.project.supply.chain.management.entity;
 
 import com.project.supply.chain.management.constants.ExtensionStatus;
 import jakarta.persistence.*;
-        import lombok.*;
+import jakarta.validation.constraints.Size;
+import lombok.*;
 
 @Entity
 @Table(name = "extensions")
@@ -14,18 +15,23 @@ public class Extension {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne @JoinColumn(name = "worker_id")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "worker_id")
     private User worker;
 
-    @ManyToOne @JoinColumn(name = "tool_id")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "tool_id")
     private Tool tool;
 
     @Enumerated(EnumType.STRING)
+    @Column
     private ExtensionStatus status = ExtensionStatus.APPROVED;
 
-    @ManyToOne @JoinColumn(name = "approved_by")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "approved_by")
     private User approvedBy;
 
     @Column(columnDefinition = "text")
+    @Size(min=1,max = 100,message = "comment must be between 1-100 characters")
     private String comment;
 }

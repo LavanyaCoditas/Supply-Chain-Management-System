@@ -2,6 +2,8 @@ package com.project.supply.chain.management.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
     @Entity
@@ -14,12 +16,15 @@ import java.time.LocalDate;
         @GeneratedValue(strategy = GenerationType.IDENTITY)
         private Long id;
 
-        @ManyToOne @JoinColumn(name = "order_id")
+        @ManyToOne(fetch = FetchType.LAZY)
+        @JoinColumn(name = "order_id")
         private DistributorOrder order;
 
-        @ManyToOne @JoinColumn(name = "customer_id")
+        @ManyToOne(fetch = FetchType.LAZY)
+        @JoinColumn(name = "customer_id")
         private User customer;
 
+        @Column(nullable = false)
         private Long distributorId;
 
         @Column(columnDefinition = "text")
@@ -28,8 +33,11 @@ import java.time.LocalDate;
         @Column(columnDefinition = "text")
         private String pdfUrl;
 
+        @Column(nullable = false)
         private LocalDate date;
-        private java.math.BigDecimal totalAmount;
+
+        @Column(nullable = false)
+        private BigDecimal totalAmount;
     }
 
 

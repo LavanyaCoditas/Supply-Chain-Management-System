@@ -13,8 +13,11 @@ public class Email {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column
     private String sender;
+    @Column
     private String recipient;
+    @Column
     private String subject;
 
     @Column(columnDefinition = "text")

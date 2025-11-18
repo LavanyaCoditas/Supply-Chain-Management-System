@@ -15,14 +15,16 @@ public class ToolIssuance {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne @JoinColumn(name = "request_id")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "request_id")
     private ToolRequest request;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "tool_id")
     private Tool tool;
 
     @Enumerated(EnumType.STRING)
+    @Column
     private ToolIssuanceStatus status = ToolIssuanceStatus.ISSUED;
 
 }

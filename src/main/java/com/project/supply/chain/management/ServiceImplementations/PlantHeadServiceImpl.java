@@ -7,6 +7,7 @@ import com.project.supply.chain.management.constants.Role;
 import com.project.supply.chain.management.dto.*;
 import com.project.supply.chain.management.entity.*;
 import com.project.supply.chain.management.specifications.EmployeeSpecifications;
+import com.project.supply.chain.management.util.ApplicationUtils;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
@@ -27,41 +28,36 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
-@AllArgsConstructor
 @RequiredArgsConstructor
+
 public class PlantHeadServiceImpl implements PlantHeadService {
 
-    @Autowired
-    ProductRepository productRepository;
-    @Autowired
-    BayRepository bayRepository;
-    @Autowired
-    FactoryRepository factoryRepository;
-    @Autowired
-    UserRepository userRepository;
-    @Autowired
-    UserFactoryMappingRepository userFactoryMappingRepository;
-    @Autowired
-    PasswordEncoder passwordEncoder;
-    @Autowired
-    EmailService emailService;
 
-    @Autowired
-    private FactoryProductionRepository factoryProductionRepository;
+    private final ProductRepository productRepository;
 
-    @Autowired
-    private FactoryInventoryStockRepository factoriesInventoryStockRepository;
+    private final BayRepository bayRepository;
 
-    //    private final BayRepository bayRepository;
-//        private final UserRepository userRepository;
-//        private final UserFactoryMappingRepository userFactoryMappingRepository;
+   private final FactoryRepository factoryRepository;
+
+    private  final UserRepository userRepository;
+
+   private final UserFactoryMappingRepository userFactoryMappingRepository;
+
+    private final PasswordEncoder passwordEncoder;
+
+    private final EmailService emailService;
+
+    private final ApplicationUtils appUtils;
+    private final FactoryProductionRepository factoryProductionRepository;
+
+
+    private final FactoryInventoryStockRepository factoriesInventoryStockRepository;
+
     @Override
     @Transactional
     public ApiResponseDto<String> createBay( BayRequestDto request) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String email = authentication.getName();
-        // Validate Plant Head existence
-        User plantHead = userRepository.findByEmail(email);
+
+        User plantHead =appUtils.getUser(appUtils.getLoggedInUserEmail());
         if (plantHead == null) {
             throw new RuntimeException("Logged-in Plant Head not found");
         }
@@ -78,13 +74,13 @@ public class PlantHeadServiceImpl implements PlantHeadService {
 
         Factory factory = optionalMapping.get().getFactory();
 
-        // 3️⃣ Validate that bay name doesn’t already exist in the same factory
+        // Validate that bay name doesn’t already exist in the same factory
         boolean exists = bayRepository.existsByNameAndFactory(request.getBayName(), factory);
         if (exists) {
             throw new RuntimeException("A bay with this name already exists in the factory");
         }
 
-        // 4️⃣ Create new bay only if all checks pass
+        //  Create new bay only if all checks pass
         Bay bay = new Bay();
         bay.setName(request.getBayName());
         bay.setFactory(factory);
@@ -100,26 +96,22 @@ public class PlantHeadServiceImpl implements PlantHeadService {
 
     @Override
     public ApiResponseDto<List<BayListdto>> getBaysInFactory() {
-        // 🔹 Get current logged-in user
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String email = authentication.getName();
 
-        // 🔹 Find plant head by email
-        User plantHead = userRepository.findByEmail(email);
+        User plantHead=appUtils.getUser(appUtils.getLoggedInUserEmail());
         if (plantHead == null) {
             throw new RuntimeException(" Plant Head not found");
         }
 
-        // 🔹 Find factory mapped to this plant head
+        //  Find factory mapped to this plant head
         UserFactoryMapping mapping = userFactoryMappingRepository.findByUser(plantHead)
                 .orElseThrow(() -> new RuntimeException("Plant Head is not mapped to any factory"));
 
         Factory factory = mapping.getFactory();
 
-        // 🔹 Fetch bays for this factory
+        // Fetch bays for this factory
         List<Bay> bays = bayRepository.findByFactory(factory);
 
-        // 🔹 Convert to DTO
+        // Convert to DTO
         List<BayListdto> bayDtos = bays.stream()
                 .map(bay -> {
                     BayListdto dto = new BayListdto();
@@ -137,20 +129,17 @@ public class PlantHeadServiceImpl implements PlantHeadService {
     @Override
     public ApiResponseDto<UserResponseDto> createEmployeeForCurrentPlantHead(EmployeeRequestDto request)
     {
-
-        // 1️⃣ Get logged-in Plant Head
-        String loggedInEmail = SecurityContextHolder.getContext().getAuthentication().getName();
-        User plantHead = userRepository.findByEmail(loggedInEmail);
+        User plantHead=appUtils.getUser(appUtils.getLoggedInUserEmail());
         if (plantHead == null) {
             throw new RuntimeException("Logged-in Plant Head not found");
         }
 
-        // 2️⃣ Verify that the Plant Head is mapped to a factory
+        //  Verify that the Plant Head is mapped to a factory
         UserFactoryMapping mapping = userFactoryMappingRepository.findByUser(plantHead)
                 .orElseThrow(() -> new RuntimeException("Plant Head is not mapped to any factory"));
         Factory factory = mapping.getFactory();
 
-        // 3️⃣ Ensure only one Chief Supervisor per factory
+        //  Ensure only one Chief Supervisor per factory
         if (request.getRole() == Role.CHIEF_SUPERVISOR) {
             boolean exists = userFactoryMappingRepository.existsByFactoryAndAssignedRole(factory, Role.CHIEF_SUPERVISOR);
             if (exists) {
@@ -158,12 +147,12 @@ public class PlantHeadServiceImpl implements PlantHeadService {
             }
         }
 
-        // 4️⃣ Check for duplicate email
+        //  Check for duplicate email
         if (userRepository.findByEmail(request.getEmail()) != null) {
             throw new RuntimeException("User with this email already exists");
         }
 
-        // 5️⃣ Create new user
+        //  Create new user
         User newUser = new User();
         newUser.setUsername(request.getName());
         newUser.setEmail(request.getEmail());
@@ -177,7 +166,7 @@ public class PlantHeadServiceImpl implements PlantHeadService {
 
         userRepository.save(newUser);
 
-        // 6️⃣ Create mapping for the new employee
+        //  Create mapping for the new employee
         UserFactoryMapping employeeMapping = new UserFactoryMapping();
         employeeMapping.setUser(newUser);
         employeeMapping.setFactory(factory);
@@ -197,10 +186,10 @@ public class PlantHeadServiceImpl implements PlantHeadService {
 
         userFactoryMappingRepository.save(employeeMapping);
 
-        // 7️⃣ Send email
+        //  Send email
         sendEmailToEmployee(newUser, factory, request.getRole(), bay);
 
-        // 8️⃣ Build response DTO
+        //  Build response DTO
         UserResponseDto responseDto = new UserResponseDto(
                 newUser.getId(),
                 newUser.getUsername(),
@@ -242,21 +231,19 @@ public class PlantHeadServiceImpl implements PlantHeadService {
 
     @Override
     public ApiResponseDto<Page<UserResponseDto>> getEmployeesInFactory(
-            String keyword, String roleStr, int page, int size
-    ) {
-        // ✅ 1. Get logged-in Plant Head
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        User plantHead = userRepository.findByEmail(email);
+            String keyword, String roleStr, int page, int size)
+    {
+        User plantHead =appUtils.getUser(appUtils.getLoggedInUserEmail());
         if (plantHead == null) {
             throw new RuntimeException("Plant Head not found");
         }
 
-        // ✅ 2. Verify Plant Head is mapped to a factory
+        //2. Verify Plant Head is mapped to a factory
         Factory factory = userFactoryMappingRepository.findByUser(plantHead)
                 .map(UserFactoryMapping::getFactory)
                 .orElseThrow(() -> new RuntimeException("Plant Head is not mapped to any factory"));
 
-        // ✅ 3. Parse role filter (optional)
+        // 3. Parse role filter (optional)
         Role role = null;
         if (roleStr != null && !roleStr.isBlank()) {
             try {
@@ -266,7 +253,7 @@ public class PlantHeadServiceImpl implements PlantHeadService {
             }
         }
 
-        // ✅ 4. Build dynamic specification
+        // 4. Build dynamic specification
         Specification<UserFactoryMapping> spec = Specification.allOf(
                 EmployeeSpecifications.belongsToFactory(factory),
                 EmployeeSpecifications.hasRole(role),
@@ -275,10 +262,10 @@ public class PlantHeadServiceImpl implements PlantHeadService {
 
         Pageable pageable = PageRequest.of(page, size, Sort.by("user.username").ascending());
 
-        // ✅ 5. Fetch paginated employee data
+        // 5. Fetch paginated employee data
         Page<UserFactoryMapping> mappings = userFactoryMappingRepository.findAll(spec, pageable);
 
-        // ✅ 6. Map entity -> DTO (now includes image)
+        //6. Map entity -> DTO (now includes image)
         Page<UserResponseDto> response = mappings.map(mapping -> {
             User user = mapping.getUser();
             return new UserResponseDto(
@@ -301,33 +288,33 @@ public class PlantHeadServiceImpl implements PlantHeadService {
     @Override
     @Transactional
     public ApiResponseDto<Void> updateFactoryProductStock(UpdateStockRequestDto request) {
-        // ✅ 1. Get logged-in Plant Head
+        // 1. Get logged-in Plant Head
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         User plantHead = userRepository.findByEmail(email);
         if (plantHead == null) {
             throw new RuntimeException("Plant Head not found");
         }
 
-        // ✅ 2. Verify that the user is mapped to a factory
+        //  Verify that the user is mapped to a factory
         UserFactoryMapping mapping = userFactoryMappingRepository.findByUser(plantHead)
                 .orElseThrow(() -> new RuntimeException("Plant Head is not mapped to any factory"));
         Factory factory = mapping.getFactory();
 
-        // ✅ 3. Validate Product
+        //  Validate Product
         Product product = productRepository.findById(request.getProductId())
                 .orElseThrow(() -> new RuntimeException("Product not found"));
 
-        // ✅ 4. Find existing or create new stock record
+        //  Find existing or create new stock record
         FactoriesInventoryStock stock = factoriesInventoryStockRepository
                 .findByFactoryAndProduct(factory, product)
                 .orElse(new FactoriesInventoryStock(null,factory, product, 0, plantHead));
 
-        // ✅ 5. Update stock quantity
+        // Update stock quantity
         stock.setQty(stock.getQty() + request.getQuantityProduced());
         stock.setAddedBy(plantHead);
         factoriesInventoryStockRepository.save(stock);
 
-        // ✅ 6. Log production entry
+        // Log production entry
         FactoryProduction production = new FactoryProduction();
         production.setFactory(factory);
         production.setProduct(product);
@@ -339,26 +326,25 @@ public class PlantHeadServiceImpl implements PlantHeadService {
     }
     @Override
     public ApiResponseDto<List<FactoryProductStockResponseDto>> getAllProductsWithStock() {
-        // ✅ 1. Get currently logged-in Plant Head
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        User plantHead = userRepository.findByEmail(email);
+
+        User plantHead =appUtils.getUser(appUtils.getLoggedInUserEmail());
         if (plantHead == null) {
             throw new RuntimeException("Plant Head not found");
         }
 
-        // ✅ 2. Get factory assigned to plant head
+        // Get factory assigned to plant head
         UserFactoryMapping mapping = userFactoryMappingRepository.findByUser(plantHead)
                 .orElseThrow(() -> new RuntimeException("Plant Head is not mapped to any factory"));
 
         Factory factory = mapping.getFactory();
 
-        // ✅ 3. Get all products from owner (assumed global)
+        //  Get all products from owner (assumed global)
         List<Product> allProducts = productRepository.findAll();
 
-        // ✅ 4. Get stock entries for that factory
+        //  Get stock entries for that factory
         List<FactoriesInventoryStock> factoryStocks = factoriesInventoryStockRepository.findAllByFactory(factory);
 
-        // ✅ 5. Map Product + Stock
+        // Map Product + Stock
         List<FactoryProductStockResponseDto> result = allProducts.stream().map(product -> {
             Integer qty = factoryStocks.stream()
                     .filter(s -> s.getProduct().getId().equals(product.getId()))
@@ -382,25 +368,25 @@ public class PlantHeadServiceImpl implements PlantHeadService {
     }
     @Override
     public ApiResponseDto<List<FactoryProductStockResponseDto>> getLowStockProducts() {
-        // ✅ 1. Get logged-in Plant Head
+        //  Get logged-in Plant Head
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         User plantHead = userRepository.findByEmail(email);
         if (plantHead == null) {
             throw new RuntimeException("Plant Head not found");
         }
 
-        // ✅ 2. Verify mapping to factory
+        // Verify mapping to factory
         UserFactoryMapping mapping = userFactoryMappingRepository.findByUser(plantHead)
                 .orElseThrow(() -> new RuntimeException("Plant Head is not mapped to any factory"));
         Factory factory = mapping.getFactory();
 
-        // ✅ 3. Get all global products (added by owner)
+        //  Get all global products (added by owner)
         List<Product> allProducts = productRepository.findAll();
 
-        // ✅ 4. Get stock entries for that factory
+        // Get stock entries for that factory
         List<FactoriesInventoryStock> factoryStocks = factoriesInventoryStockRepository.findAllByFactory(factory);
 
-        // ✅ 5. Combine both: calculate low stock products
+        // Combine both: calculate low stock products
         List<FactoryProductStockResponseDto> lowStockProducts = allProducts.stream()
                 .map(product -> {
                     // Try to find stock entry for this product
@@ -424,7 +410,7 @@ public class PlantHeadServiceImpl implements PlantHeadService {
                             product.getRewardPts()
                     );
                 })
-                // ✅ Filter only those below or equal to threshold
+                // Filter only those below or equal to threshold
                 .filter(dto -> dto.getThreshold() != null && dto.getCurrentQty() <= dto.getThreshold())
                 .collect(Collectors.toList());
 

@@ -28,7 +28,7 @@ public class AuthUtil {
         return Jwts.builder()
                 .subject(user.getEmail())
                 .claim("userId", user.getId())
-                .claim("role", user.getRole().name()) // Include role for role-based access
+                .claim("role", user.getRole().name())
                 .issuedAt(new Date(System.currentTimeMillis()))
                 .expiration(new Date(System.currentTimeMillis() + 1000 * 60 * 300)) // 5 hours
                 .signWith(getSecretKey())
