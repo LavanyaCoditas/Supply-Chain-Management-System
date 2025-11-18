@@ -7,7 +7,7 @@ import org.springframework.data.jpa.domain.Specification;
 
 public class ToolSpecifications {
 
-    // 🔍 Search by tool name
+    //  Search by tool name
     public static Specification<Tool> searchByName(String name) {
         return (root, query, cb) -> {
             if (name == null || name.isBlank()) return cb.conjunction();
@@ -16,7 +16,7 @@ public class ToolSpecifications {
         };
     }
 
-    // 🔍 Search by category name
+    //  Search by category name
     public static Specification<Tool> searchByCategory(String categoryName) {
         return (root, query, cb) -> {
             if (categoryName == null || categoryName.isBlank()) return cb.conjunction();
@@ -26,7 +26,7 @@ public class ToolSpecifications {
         };
     }
 
-    // 🔍 Search by tool type
+    //  Search by tool type
     public static Specification<Tool> searchByType(String type) {
         return (root, query, cb) -> {
             if (type == null || type.isBlank()) return cb.conjunction();
@@ -34,7 +34,7 @@ public class ToolSpecifications {
         };
     }
 
-    // 💰 Filter by expensive flag (YES/NO)
+    //  Filter by expensive flag (YES/NO)
     public static Specification<Tool> filterByExpensive(String isExpensive) {
         return (root, query, cb) -> {
             if (isExpensive == null || isExpensive.isBlank()) return cb.conjunction();
@@ -42,7 +42,7 @@ public class ToolSpecifications {
         };
     }
 
-    // 📦 Filter by stock availability
+    //  Filter by stock availability
     public static Specification<Tool> filterByStock(Boolean inStock) {
         return (root, query, cb) -> {
             if (inStock == null) return cb.conjunction();

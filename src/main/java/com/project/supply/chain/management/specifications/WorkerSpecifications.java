@@ -12,9 +12,7 @@ import org.springframework.data.jpa.domain.Specification;
 
 public class WorkerSpecifications {
 
-    /**
-     * ✅ Search workers by name (case-insensitive)
-     */
+    //Search workers by name (case-insensitive)
     public static Specification<UserFactoryMapping> searchByWorkerName(String name) {
         return (root, query, cb) -> {
             if (name == null || name.isBlank()) return cb.conjunction();
@@ -23,9 +21,9 @@ public class WorkerSpecifications {
         };
     }
 
-    /**
-     * ✅ Search by Factory Name
-     */
+
+     // Search by Factory Name
+
     public static Specification<UserFactoryMapping> searchByFactoryName(String factoryName) {
         return (root, query, cb) -> {
             if (factoryName == null || factoryName.isBlank()) return cb.conjunction();
@@ -34,9 +32,9 @@ public class WorkerSpecifications {
         };
     }
 
-    /**
-     * ✅ Search by Bay Name
-     */
+
+     // Search by Bay Name
+
     public static Specification<UserFactoryMapping> searchByBayName(String bayName) {
         return (root, query, cb) -> {
             if (bayName == null || bayName.isBlank()) return cb.conjunction();
@@ -45,9 +43,9 @@ public class WorkerSpecifications {
         };
     }
 
-    /**
-     * ✅ Filter by Factory entity directly
-     */
+
+     // Filter by Factory entity directly
+
     public static Specification<UserFactoryMapping> belongsToFactory(Factory factory) {
         return (root, query, cb) -> {
             if (factory == null) return cb.conjunction();
@@ -55,9 +53,9 @@ public class WorkerSpecifications {
         };
     }
 
-    /**
-     * ✅ Filter by Bay entity directly
-     */
+
+     // Filter by Bay entity directly
+
     public static Specification<UserFactoryMapping> belongsToBay(Bay bay) {
         return (root, query, cb) -> {
             if (bay == null) return cb.conjunction();
@@ -65,9 +63,8 @@ public class WorkerSpecifications {
         };
     }
 
-    /**
-     * ✅ Filter by Role (ensure only WORKERs are fetched)
-     */
+
+     // Filter by Role
     public static Specification<UserFactoryMapping> hasRole(Role role) {
         return (root, query, cb) -> {
             if (role == null) return cb.conjunction();
@@ -75,9 +72,9 @@ public class WorkerSpecifications {
         };
     }
 
-    /**
-     * ✅ Filter by account status (active/inactive)
-     */
+
+     // Filter by account status
+
     public static Specification<UserFactoryMapping> hasAccountStatus(Account_Status status) {
         return (root, query, cb) -> {
             if (status == null) return cb.conjunction();

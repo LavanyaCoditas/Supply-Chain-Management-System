@@ -3,6 +3,7 @@ package com.project.supply.chain.management.Controllers;
 import com.project.supply.chain.management.ServiceInterfaces.ProductRestockRequestService;
 import com.project.supply.chain.management.ServiceInterfaces.ProductService;
 import com.project.supply.chain.management.dto.*;
+import org.apache.tomcat.util.http.fileupload.FileUploadException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
@@ -22,7 +23,7 @@ public class ProductController
     @PostMapping(value = "/upload", consumes = {"multipart/form-data"})
     public ResponseEntity<ApiResponseDto<ProductResponseDto>> uploadProduct(
             @ModelAttribute AddProductDto productDto,
-            @RequestPart("image") MultipartFile imageFile) {
+            @RequestPart("image") MultipartFile imageFile) throws FileUploadException {
 
         ApiResponseDto<ProductResponseDto> response = productService.uploadProductWithImage(productDto, imageFile);
         return ResponseEntity.ok(response);
