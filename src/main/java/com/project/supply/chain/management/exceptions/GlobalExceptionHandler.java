@@ -5,10 +5,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.WebRequest;
 
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestControllerAdvice
@@ -64,17 +70,17 @@ public class GlobalExceptionHandler {
     }
 
     // Handle Built-in Spring Exceptions
-    @ExceptionHandler(DataAccessException.class)
-    public ResponseEntity<ErrorResponseDto> handleDataAccessException(DataAccessException ex) {
-        log.error("Database error: {}", ex.getMessage());
-        ErrorResponseDto error = new ErrorResponseDto(
-                false,
-                "DATABASE_ERROR",
-                "A database error occurred",
-                HttpStatus.INTERNAL_SERVER_ERROR.value()
-        );
-        return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
-    }
+//    @ExceptionHandler(DataAccessException.class)
+//    public ResponseEntity<ErrorResponseDto> handleDataAccessException(DataAccessException ex) {
+//        log.error("Database error: {}", ex.getMessage());
+//        ErrorResponseDto error = new ErrorResponseDto(
+//                false,
+//                "DATABASE_ERROR",
+//                "A database error occurred",
+//                HttpStatus.INTERNAL_SERVER_ERROR.value()
+//        );
+//        return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
+//    }
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorResponseDto> handleIllegalArgumentException(IllegalArgumentException ex) {
@@ -154,4 +160,50 @@ public class GlobalExceptionHandler {
         );
         return new ResponseEntity<>(error, HttpStatus.CONFLICT);
     }
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<Map<String, Object>> handleHttpRequestMethodNotSupported(
+            HttpRequestMethodNotSupportedException ex, WebRequest request) {
+
+        Map<String, Object> errorResponse = new LinkedHashMap<>();
+        errorResponse.put("timestamp", LocalDateTime.now());
+        errorResponse.put("status", HttpStatus.METHOD_NOT_ALLOWED.value());
+        errorResponse.put("error", HttpStatus.METHOD_NOT_ALLOWED.getReasonPhrase());
+        errorResponse.put("message", "HTTP method '" + ex.getMethod() + "' is not supported for this endpoint. Supported methods: " +
+                (ex.getSupportedHttpMethods() != null ? ex.getSupportedHttpMethods() : "None"));
+        errorResponse.put("path", request.getDescription(false).replace("uri=", ""));
+
+        return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).body(errorResponse);
+    }
+    @ExceptionHandler(EmailAlreadyExistException.class)
+    public ResponseEntity<ErrorResponseDto> handleEmailAlreadyExistException(EmailAlreadyExistException e)
+    {
+        log.error("Email is already exists");
+        ErrorResponseDto errorResponseDto=new ErrorResponseDto(
+                false,
+                "EMAIL_ALREADY_EXISTS",
+                e.getMessage(),
+                HttpStatus.CONFLICT.value());
+        return new ResponseEntity<>(errorResponseDto,HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler(UsernameAlreadyExistException.class)
+    public ResponseEntity<ErrorResponseDto> handleUsernameAlreadyExistException(UsernameAlreadyExistException e)
+    {
+        log.error("Username is already exists");
+        ErrorResponseDto errorResponseDto=new ErrorResponseDto(
+                false,
+                "USERNAME_ALREADY_EXISTS",
+                e.getMessage(),
+                HttpStatus.CONFLICT.value());
+        return new ResponseEntity<>(errorResponseDto,HttpStatus.CONFLICT);
+    }
+
+    //    @ExceptionHandler(EmailAlreadyExistException.class)
+//    public ResponseEntity<Map<String, Object>> handleEmailAlreadyExists(EmailAlreadyExistException ex) {
+//        Map<String, Object> errors = new HashMap<>();
+//        errors.put("timestamp", LocalDateTime.now());
+//        errors.put("message", ex.getMessage());
+//        errors.put("status", HttpStatus.CONFLICT.value());
+//        return new ResponseEntity<>(errors, HttpStatus.CONFLICT);
+//    }
 }

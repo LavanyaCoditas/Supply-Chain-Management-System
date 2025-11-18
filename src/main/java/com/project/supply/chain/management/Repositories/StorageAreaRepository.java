@@ -10,7 +10,7 @@ import java.util.List;
 
 @Repository
 public interface StorageAreaRepository extends JpaRepository<StorageArea, Long> {
-    // Additional custom queries if needed
+
     List<StorageArea> findByFactory(Factory factory);
     boolean existsByFactoryAndRowNumAndColNumAndStack(
             Factory factory,

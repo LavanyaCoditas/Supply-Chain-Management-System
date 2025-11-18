@@ -7,5 +7,4 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface DistributorInventoryRepository extends JpaRepository<DistributorInventory, Long> {
-    // Additional custom queries if needed
 }

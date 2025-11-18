@@ -7,5 +7,4 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface DistributorOrderRepository extends JpaRepository<DistributorOrder, Long> {
-    // Additional custom queries if needed
 }

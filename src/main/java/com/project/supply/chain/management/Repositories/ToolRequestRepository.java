@@ -13,5 +13,5 @@ import org.springframework.stereotype.Repository;
 public interface ToolRequestRepository extends JpaRepository<ToolRequest, Long>, JpaSpecificationExecutor<ToolRequest> {
 
     Page<ToolRequest> findAll(Specification<ToolRequest> spec, Pageable pageable);
-    // Additional custom queries if needed
+
 }

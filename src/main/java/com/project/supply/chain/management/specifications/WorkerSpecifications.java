@@ -21,7 +21,6 @@ public class WorkerSpecifications {
         };
     }
 
-
      // Search by Factory Name
 
     public static Specification<UserFactoryMapping> searchByFactoryName(String factoryName) {
@@ -72,9 +71,7 @@ public class WorkerSpecifications {
         };
     }
 
-
      // Filter by account status
-
     public static Specification<UserFactoryMapping> hasAccountStatus(Account_Status status) {
         return (root, query, cb) -> {
             if (status == null) return cb.conjunction();

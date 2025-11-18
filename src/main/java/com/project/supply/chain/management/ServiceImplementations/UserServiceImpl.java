@@ -8,9 +8,7 @@ import com.project.supply.chain.management.constants.Role;
 import com.project.supply.chain.management.dto.*;
 import com.project.supply.chain.management.entity.User;
 import com.project.supply.chain.management.entity.UserFactoryMapping;
-import com.project.supply.chain.management.exceptions.InvalidCredentialsException;
-import com.project.supply.chain.management.exceptions.UnauthorizedAccessException;
-import com.project.supply.chain.management.exceptions.UserNotFoundException;
+import com.project.supply.chain.management.exceptions.*;
 import com.project.supply.chain.management.util.ApplicationUtils;
 import com.project.supply.chain.management.util.AuthUtil;
 import com.project.supply.chain.management.specifications.UserSpecifications;
@@ -54,8 +52,17 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public SignupResponseDto registerUser(UserSignupDto userSignupDto) throws IOException, IOException {
+    public SignupResponseDto registerUser(UserSignupDto userSignupDto)  {
+        if (userRepository.existsByEmail(userSignupDto.getEmail())) {
+            throw new EmailAlreadyExistException("Email '" + userSignupDto.getEmail() + "' already exists");
+        }
+
+        if (userRepository.existsByUsername(userSignupDto.getUsername()))
+        {
+            throw new UsernameAlreadyExistException("Username "+ userSignupDto.getUsername()+" already exists");
+        }
         User user = new User();
+
         user.setUsername(userSignupDto.getUsername());
         user.setEmail(userSignupDto.getEmail());
         user.setPhone(userSignupDto.getPhone());

@@ -25,7 +25,7 @@ public class User implements UserDetails {
 
     @NotBlank(message = "Username cannot be blank")
     @Size(min = 3, max = 50, message = "Username must be between 3-50 characters")
-    @Pattern(regexp = "^[a-zA-Z0-9_]+$", message = "Username can only contain letters, numbers, and underscores")
+    @Pattern(regexp = "^[a-zA-Z][a-zA-Z0-9._-]*$", message = "Username must start with a letter and can only contain letters, numbers, dots, underscores, or hyphens")
     @Column(nullable = false, unique = true, length = 50)
     private String username;
 
@@ -33,6 +33,8 @@ public class User implements UserDetails {
     @NotBlank(message = "Email cannot be blank")
     @Email(message = "email must be valid")
     @Column(nullable = false, unique = true, length = 100)
+    @Pattern(regexp = "^[A-Za-z][A-Za-z0-9._-]*@[A-Za-z0-9.-]+\\.[A-Za-z]{2,6}$",
+            message = "Email must start with a letter, should have @, have valid domain and be valid like example@gmail.com")
     private String email;
 
     @Column

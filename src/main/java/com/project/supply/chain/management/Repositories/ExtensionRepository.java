@@ -7,5 +7,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface ExtensionRepository extends JpaRepository<Extension, Long> {
-    // Additional custom queries if needed
+
 }

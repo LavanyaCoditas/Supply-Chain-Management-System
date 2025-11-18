@@ -13,11 +13,11 @@ import java.util.Optional;
 
 @Repository
 public interface FactoryInventoryStockRepository extends JpaRepository<FactoriesInventoryStock, Long> {
-    // Additional custom queries if needed
+
     Optional<FactoriesInventoryStock> findByFactoryAndProduct(Factory factory, Product product);
     List<FactoriesInventoryStock> findAllByFactory(Factory factory);
 
-    // ✅ Custom join query to fetch all products with stock in that factory
+    //  join query to fetch all products with stock in that factory
     @Query("""
         SELECT s FROM FactoriesInventoryStock s
         RIGHT JOIN Product p ON s.product = p

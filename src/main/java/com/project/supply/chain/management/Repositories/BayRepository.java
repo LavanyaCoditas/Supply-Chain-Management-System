@@ -10,7 +10,7 @@ import java.util.List;
 
 @Repository
 public interface BayRepository extends JpaRepository<Bay, Long> {
-    // Additional custom queries if needed
+
     List<Bay> findByFactory(Factory factory);
 
     boolean existsByNameAndFactory(String name, Factory factory);

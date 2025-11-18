@@ -1,6 +1,4 @@
 package com.project.supply.chain.management.dto;
-
-
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.project.supply.chain.management.constants.Role;
 import com.project.supply.chain.management.constants.Account_Status;

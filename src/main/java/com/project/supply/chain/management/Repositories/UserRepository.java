@@ -4,6 +4,8 @@ import com.project.supply.chain.management.constants.Account_Status;
 import com.project.supply.chain.management.entity.User;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -27,7 +29,7 @@ public interface UserRepository extends JpaRepository<User,Long> , JpaSpecificat
         """)
     List<User> findAllByFactory(Long factoryId);
 
-    // ✅ Count active/inactive employees if needed separately
+    //active inactive employees
     @Query("""
         SELECT COUNT(u)
         FROM User u
@@ -35,4 +37,7 @@ public interface UserRepository extends JpaRepository<User,Long> , JpaSpecificat
         WHERE fm.factory.id = :factoryId AND u.isActive = :status
         """)
     int countByFactoryAndStatus(Long factoryId, Account_Status status);
+    boolean existsByEmail(String email);
+
+    boolean existsByUsername( String username);
 }

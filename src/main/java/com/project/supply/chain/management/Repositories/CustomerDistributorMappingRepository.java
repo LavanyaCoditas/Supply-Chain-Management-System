@@ -7,5 +7,4 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface CustomerDistributorMappingRepository extends JpaRepository<CustomerDistributorMapping, Long> {
-    // Additional custom queries if needed
 }

@@ -6,5 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface ToolRestockRequestRepository extends JpaRepository<ToolRestockRequest, Long> {
-    // Additional custom queries if needed
+
 }

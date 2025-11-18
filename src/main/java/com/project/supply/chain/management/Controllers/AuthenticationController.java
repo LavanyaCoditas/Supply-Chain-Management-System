@@ -5,6 +5,7 @@ import com.project.supply.chain.management.ServiceImplementations.CloudinaryServ
 
 import com.project.supply.chain.management.ServiceInterfaces.UserService;
 import com.project.supply.chain.management.dto.*;
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -23,13 +24,13 @@ public class AuthenticationController
 
 
     @PostMapping("/signup")
-    public ResponseEntity<SignupResponseDto> signup(@RequestBody UserSignupDto userSignupDto) throws IOException {
+    public ResponseEntity<SignupResponseDto> signup(@Valid @RequestBody UserSignupDto userSignupDto) throws IOException {
         SignupResponseDto responseDto = userService.registerUser(userSignupDto);
         return ResponseEntity.ok(responseDto);
     }
 
     @PostMapping("/login")
-    public  ResponseEntity<LoginResponseDto> login(@RequestBody LoginDto loginDto)
+    public  ResponseEntity<LoginResponseDto> login(@Valid @RequestBody LoginDto loginDto)
     {
         return ResponseEntity.ok(userService.loginUser(loginDto));
     }

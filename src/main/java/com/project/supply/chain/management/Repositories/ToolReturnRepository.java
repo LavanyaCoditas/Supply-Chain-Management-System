@@ -7,5 +7,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface ToolReturnRepository extends JpaRepository<ToolReturn, Long> {
-    // Additional custom queries if needed
+
 }
