@@ -30,6 +30,7 @@ public class ProductCategoryController {
         ApiResponseDto<Void> response = categoryService.updateProductCategory(categoryId, dto);
         return ResponseEntity.ok(response);
     }
+
     @GetMapping("/get/categories")
     @PreAuthorize("hasAnyAuthority('OWNER', 'CENTRAL_OFFICE', 'PLANT_HEAD', 'DISTRIBUTOR')")
     public ResponseEntity<ApiResponseDto<List<ProductCategoryResponseDto>>> getAllCategories(
@@ -39,6 +40,7 @@ public class ProductCategoryController {
         ApiResponseDto<List<ProductCategoryResponseDto>> response = categoryService.getAllCategories(sortBy, sortDir);
         return ResponseEntity.ok(response);
     }
+
     @DeleteMapping("/delete/{categoryId}")
     public ResponseEntity<ApiResponseDto<Void>> deleteProductCategory(@PathVariable Long categoryId) {
         ApiResponseDto<Void> response = categoryService.deleteProductCategory(categoryId);

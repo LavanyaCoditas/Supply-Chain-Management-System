@@ -13,7 +13,7 @@ public class ErrorResponseDto {
     private boolean success;
     private String errorCode;
     private String message;
-    private int status; // HTTP status code
+    private int status;
     private LocalDateTime timestamp = LocalDateTime.now();
 
     public ErrorResponseDto(boolean success, String errorCode, String message, int status) {

@@ -18,10 +18,10 @@ import java.io.IOException;
 public class AuthenticationController
 
 {
-
     private final UserService userService;
-
     private final AuthService authService;
+
+
     @PostMapping("/signup")
     public ResponseEntity<SignupResponseDto> signup(@RequestBody UserSignupDto userSignupDto) throws IOException {
         SignupResponseDto responseDto = userService.registerUser(userSignupDto);
