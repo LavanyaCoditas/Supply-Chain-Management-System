@@ -10,6 +10,10 @@ import com.project.supply.chain.management.dto.*;
 import com.project.supply.chain.management.entity.Bay;
 import com.project.supply.chain.management.entity.User;
 import com.project.supply.chain.management.entity.UserFactoryMapping;
+import com.project.supply.chain.management.exceptions.InvalidCredentialsException;
+import com.project.supply.chain.management.exceptions.ResourceNotFoundException;
+import com.project.supply.chain.management.exceptions.UnauthorizedAccessException;
+import com.project.supply.chain.management.exceptions.UserNotFoundException;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -44,25 +48,25 @@ public class ChiefSupervisorServiceImpl implements CheifSupervisorService {
         String supervisorEmail = SecurityContextHolder.getContext().getAuthentication().getName();
         User supervisor = userRepository.findByEmail(supervisorEmail);
         if (supervisor == null) {
-            throw new RuntimeException("Supervisor not found in context");
+            throw new UserNotFoundException("Supervisor not found ");
         }
 
         //  Check duplicate email
         if (userRepository.findByEmail(dto.getEmail()) != null) {
-            return new ApiResponseDto<>(false, "User with this email already exists", null);
+            throw  new InvalidCredentialsException( "User with this email already exists");
         }
 
         //  Get supervisor’s mapping
         UserFactoryMapping supervisorMapping = userFactoryMappingRepository.findByUser(supervisor)
-                .orElseThrow(() -> new RuntimeException("Supervisor is not mapped to any factory/bay"));
+                .orElseThrow(() -> new UnauthorizedAccessException("Supervisor is not mapped to any factory/bay"));
 
         //  Find selected Bay
         Bay selectedBay = bayRepository.findById(dto.getBayId())
-                .orElseThrow(() -> new RuntimeException("Selected bay not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Selected bay not found"));
 
         //  Validate: Bay must belong to same factory as supervisor
         if (!selectedBay.getFactory().getId().equals(supervisorMapping.getFactory().getId())) {
-            throw new RuntimeException("Selected bay does not belong to your factory");
+            throw new ResourceNotFoundException("Selected bay does not belong to your factory");
         }
 
         //  Create new worker
@@ -85,7 +89,6 @@ public class ChiefSupervisorServiceImpl implements CheifSupervisorService {
         workerMapping.setAssignedRole(Role.WORKER);
         userFactoryMappingRepository.save(workerMapping);
 
-        //  Prepare response
         WorkerResponseDto response = new WorkerResponseDto(
                 worker.getId(),
                 worker.getUsername(),
@@ -96,7 +99,7 @@ public class ChiefSupervisorServiceImpl implements CheifSupervisorService {
         );
 
         // Send Email Notification to Worker
-        String loginUrl = "http://localhost:8080/login"; // or your frontend login URL
+        String loginUrl = "http://localhost:8080/login";
 
         String subject = "Welcome to Supply Chain System - Worker Account Created";
         String body = String.format("""
@@ -141,7 +144,7 @@ public class ChiefSupervisorServiceImpl implements CheifSupervisorService {
     @Override
     public ApiResponseDto<WorkerResponseDto> updateWorker(Long workerId, UpdateEmployeeDto dto) {
         User worker = userRepository.findById(workerId)
-                .orElseThrow(() -> new RuntimeException("Worker not found"));
+                .orElseThrow(() -> new UserNotFoundException("Worker not found"));
 
         if (dto.getUsername() != null) worker.setUsername(dto.getUsername());
         if (dto.getEmail() != null) worker.setEmail(dto.getEmail());
@@ -170,20 +173,19 @@ public class ChiefSupervisorServiceImpl implements CheifSupervisorService {
         String supervisorEmail = SecurityContextHolder.getContext().getAuthentication().getName();
         User supervisor = userRepository.findByEmail(supervisorEmail);
         if (supervisor == null) {
-            throw new RuntimeException("Supervisor not found in context");
+            throw new UserNotFoundException("Supervisor not found in context");
         }
 
-        //  Find the worker
         User worker = userRepository.findById(workerId)
-                .orElseThrow(() -> new RuntimeException("Worker not found"));
+                .orElseThrow(() -> new UserNotFoundException("Worker not found"));
 
         // Update worker status
         worker.setIsActive(Account_Status.IN_ACTIVE);
         userRepository.save(worker);
 
-        //  Get supervisor’s mapping (for factory/bay context)
+        //  Get supervisor mapping
         UserFactoryMapping supervisorMapping = userFactoryMappingRepository.findByUser(supervisor)
-                .orElseThrow(() -> new RuntimeException("Supervisor is not mapped to any factory/bay"));
+                .orElseThrow(() -> new UnauthorizedAccessException("Supervisor is not mapped to any factory/bay"));
 
         //  Get worker mapping (to fetch factory and bay info)
         UserFactoryMapping workerMapping = userFactoryMappingRepository.findByUser(worker)
@@ -197,7 +199,7 @@ public class ChiefSupervisorServiceImpl implements CheifSupervisorService {
                 ? workerMapping.getBayId().getName()
                 : "N/A";
 
-        // Prepare Email Notification
+        // Email Notification
         String subject = "Notice: Removal from Worker Position - Supply Chain System";
 
         String body = String.format("""
@@ -223,7 +225,6 @@ public class ChiefSupervisorServiceImpl implements CheifSupervisorService {
                 supervisor.getEmail()
         );
 
-        //  Send Email
         emailService.sendEmail(worker.getEmail(), subject, body);
 
         return new ApiResponseDto<>(true, "Worker deleted successfully and email sent", null);

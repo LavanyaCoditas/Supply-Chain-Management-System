@@ -10,6 +10,9 @@ import com.project.supply.chain.management.dto.CreateRestockRequestDto;
 import com.project.supply.chain.management.dto.ProductRestockRequestDto;
 import com.project.supply.chain.management.dto.UpdateProductStockDto;
 import com.project.supply.chain.management.entity.*;
+import com.project.supply.chain.management.exceptions.ResourceNotFoundException;
+import com.project.supply.chain.management.exceptions.UnauthorizedAccessException;
+import com.project.supply.chain.management.exceptions.UserNotFoundException;
 import com.project.supply.chain.management.util.ApplicationUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -25,35 +28,34 @@ public class ProductRestockRequestServiceImpl implements ProductRestockRequestSe
     private final FactoryRepository factoryRepository;
     private final ProductRepository productRepository;
     private final CentralOfficeProductRequestRepository centralOfficeProductRequestRepository;
-    private final UserRepository userRepository;
     private final ApplicationUtils appUtils;
 
 
     @Override
     public ApiResponseDto<ProductRestockRequestDto> createRestockRequest(CreateRestockRequestDto dto) {
         try {
-            // Get logged-in user
+
             User currentUser=appUtils.getUser(appUtils.getLoggedInUserEmail());
 
             if (currentUser == null)
-                throw new RuntimeException("User not found");
+                throw new UserNotFoundException("User not found");
             if (currentUser.getRole() != Role.CENTRAL_OFFICE)
-                throw new RuntimeException("Only Central Officer can create restock requests");
+                throw new UnauthorizedAccessException("Only Central Officer can create restock requests");
 
             //  Validate Factory
             Factory factory = factoryRepository.findById(dto.getFactoryId())
-                    .orElseThrow(() -> new RuntimeException("Factory not found with ID: " + dto.getFactoryId()));
+                    .orElseThrow(() -> new ResourceNotFoundException("Factory not found with ID: " + dto.getFactoryId()));
 
 
             //  Validate Product
             Product product = productRepository.findById(dto.getProductId())
-                    .orElseThrow(() -> new RuntimeException("Product not found for ID: " + dto.getProductId()));
+                    .orElseThrow(() -> new ResourceNotFoundException("Product not found for ID: " + dto.getProductId()));
 
             //  Validate Quantity
             if (dto.getQtyRequested() == null || dto.getQtyRequested() <= 0)
-                throw new RuntimeException("Quantity must be greater than 0");
+                throw new IllegalArgumentException("Quantity must be greater than 0");
 
-            //  Create Entity
+
             CentralOfficeProductRequest restockRequest = new CentralOfficeProductRequest();
             restockRequest.setFactory(factory);
             restockRequest.setProduct(product);
@@ -62,10 +64,10 @@ public class ProductRestockRequestServiceImpl implements ProductRestockRequestSe
             restockRequest.setRequestedAt(LocalDateTime.now());
             restockRequest.setRequestedByUser(currentUser);
 
-            // Save request
+
             CentralOfficeProductRequest saved = centralOfficeProductRequestRepository.save(restockRequest);
 
-            //  Convert to DTO
+
             ProductRestockRequestDto responseDto = new ProductRestockRequestDto(
                     saved.getId(),
                     saved.getFactory().getId(),

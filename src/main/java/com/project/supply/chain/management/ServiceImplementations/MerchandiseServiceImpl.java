@@ -5,6 +5,9 @@ import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
 import com.project.supply.chain.management.Repositories.MerchandiseRepository;
 import com.project.supply.chain.management.constants.Account_Status;
+import com.project.supply.chain.management.exceptions.ResourceNotFoundException;
+import com.project.supply.chain.management.exceptions.UnauthorizedAccessException;
+import com.project.supply.chain.management.exceptions.UserNotFoundException;
 import com.project.supply.chain.management.specifications.MerchandiseSpecifications;
 import com.project.supply.chain.management.util.ApplicationUtils;
 import com.project.supply.chain.management.util.CloudinaryConfig;
@@ -43,7 +46,7 @@ import java.util.Map;
 
             User user = appUtils.getUser(appUtils.getLoggedInUserEmail());
             if (user == null) {
-                return new ApiResponseDto<>(false, "User not found", null);
+                throw  new UserNotFoundException("User not found");
             }
 
             if (merchandiseRepository.existsByNameIgnoreCase(dto.getName())) {
@@ -102,7 +105,7 @@ import java.util.Map;
                 pageable = PageRequest.of(page, size, Sort.by("id").descending());
             }
 
-            // Initialize Specification
+            //  Specification
             Specification<Merchandise> spec = (root, query, cb) -> cb.conjunction();
 
             // Filter by Active Merchandise
@@ -154,10 +157,10 @@ import java.util.Map;
         @Override
         public ApiResponseDto<Void> softDeleteMerchandise(Long id) {
             Merchandise merchandise = merchandiseRepository.findById(id)
-                    .orElseThrow(() -> new RuntimeException("Merchandise not found"));
+                    .orElseThrow(() -> new ResourceNotFoundException("Merchandise not found"));
 
             if (merchandise.getIsActive() == Account_Status.IN_ACTIVE) {
-                return new ApiResponseDto<>(false, "Merchandise already deleted", null);
+                throw  new ResourceNotFoundException("Merchandise already deleted");
             }
 
             merchandise.setIsActive(Account_Status.IN_ACTIVE);
@@ -169,7 +172,7 @@ import java.util.Map;
         @Override
         public ApiResponseDto<MerchandiseResponseDto> updateMerchandise(Long id, AddMerchandiseDto dto, MultipartFile imageFile) throws Exception {
             Merchandise merchandise = merchandiseRepository.findById(id)
-                    .orElseThrow(() -> new RuntimeException("Merchandise not found"));
+                    .orElseThrow(() -> new ResourceNotFoundException("Merchandise not found"));
 
             // Update basic fields
             merchandise.setName(dto.getName());
@@ -204,27 +207,24 @@ import java.util.Map;
             User user = userRepository.findByEmail(email);
 
             if (user == null) {
-                return new ApiResponseDto<>(false, "User not found", null);
+                throw  new UserNotFoundException( "User not found");
             }
 
             if (!(user.getRole().equals(com.project.supply.chain.management.constants.Role.OWNER) ||
                     user.getRole().equals(com.project.supply.chain.management.constants.Role.CENTRAL_OFFICE))) {
-                return new ApiResponseDto<>(false, "Access denied: Only OWNER or CENTRAL_OFFICE can restock merchandise", null);
+                throw  new UnauthorizedAccessException( "Access denied: Only OWNER and CENTRAL OFFICE can restock merchandise");
             }
 
-            //  Find merchandise
             Merchandise merchandise = merchandiseRepository.findById(id)
-                    .orElseThrow(() -> new RuntimeException("Merchandise not found"));
+                    .orElseThrow(() -> new ResourceNotFoundException("Merchandise not found"));
 
             if (merchandise.getIsActive() == Account_Status.IN_ACTIVE) {
-                return new ApiResponseDto<>(false, "Cannot restock inactive merchandise", null);
+                throw  new ResourceNotFoundException( "Cannot restock inactive merchandise");
             }
 
-            //  Update quantity
             merchandise.setQuantity(merchandise.getQuantity() + additionalQuantity);
             merchandiseRepository.save(merchandise);
 
-            // Build response
             MerchandiseResponseDto response = new MerchandiseResponseDto(
                     merchandise.getId(),
                     merchandise.getName(),

@@ -7,10 +7,14 @@ import com.project.supply.chain.management.constants.Account_Status;
 import com.project.supply.chain.management.constants.Role;
 import com.project.supply.chain.management.dto.*;
 import com.project.supply.chain.management.entity.*;
+import com.project.supply.chain.management.exceptions.ResourceAlreadyExistsException;
+import com.project.supply.chain.management.exceptions.ResourceNotFoundException;
+import com.project.supply.chain.management.exceptions.UserNotFoundException;
 import com.project.supply.chain.management.specifications.ProductSpecifications;
 import com.project.supply.chain.management.util.ApplicationUtils;
 import com.project.supply.chain.management.util.CloudinaryConfig;
 import lombok.AllArgsConstructor;
+import org.apache.tomcat.util.http.fileupload.FileUploadException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -39,14 +43,12 @@ public class ProductServiceImpl implements ProductService
 
 
     @Override
-    public ApiResponseDto<ProductResponseDto> uploadProductWithImage(AddProductDto productDto, MultipartFile imageFile) {
+    public ApiResponseDto<ProductResponseDto> uploadProductWithImage(AddProductDto productDto, MultipartFile imageFile) throws FileUploadException {
         try {
 
             Optional<Product> existingProduct = productRepository.findByNameIgnoreCase(productDto.getName());
             if (existingProduct.isPresent()) {
-                return new ApiResponseDto<>(false,
-                        "A product with this name already exists: " + productDto.getName(),
-                        null);
+                throw  new ResourceAlreadyExistsException("A product with this name already exists: " + productDto.getName());
             }
 
             Cloudinary cloudinary = cloudinaryConfig.cloudinary();
@@ -56,9 +58,9 @@ public class ProductServiceImpl implements ProductService
 
             //  Get category
             ProductCategory category = categoryRepository.findById(productDto.getCategoryId())
-                    .orElseThrow(() -> new RuntimeException("Category not found"));
+                    .orElseThrow(() -> new ResourceNotFoundException("Category not found"));
 
-            // Create and save product
+
             Product product = new Product();
             product.setName(productDto.getName().trim());
             product.setProdDescription(productDto.getProdDescription());
@@ -71,7 +73,6 @@ public class ProductServiceImpl implements ProductService
 
             Product savedProduct = productRepository.save(product);
 
-            // Prepare response DTO
             ProductResponseDto responseDto = new ProductResponseDto(
                     savedProduct.getId(),
                     savedProduct.getName(),
@@ -88,7 +89,7 @@ public class ProductServiceImpl implements ProductService
         } catch (IOException e) {
             return new ApiResponseDto<>(false, "Image upload failed: " + e.getMessage(), null);
         } catch (Exception e) {
-            return new ApiResponseDto<>(false, "Error uploading product: " + e.getMessage(), null);
+            throw  new FileUploadException( "Error uploading product: " + e.getMessage());
         }
     }
 
@@ -99,7 +100,7 @@ public class ProductServiceImpl implements ProductService
         // include only active products
         Specification<Product> spec = (root, query, cb) -> cb.equal(root.get("isActive"), Account_Status.ACTIVE);
 
-        // combine additional filters
+
         if (search != null && !search.isBlank()) {
             spec = spec.and(ProductSpecifications.searchProducts(search));
         }
@@ -133,11 +134,11 @@ public class ProductServiceImpl implements ProductService
 
                 if(loggedInUser ==null && loggedInUser.getRole()!= Role.OWNER)
                 {
-                    throw new RuntimeException("User Not found");
+                    throw new UserNotFoundException("User Not found");
                 }
 
         Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new RuntimeException("Product not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
         if (product.getIsActive() == Account_Status.IN_ACTIVE) {
             return new ApiResponseDto<>(false, "Product already inactive", null);
         }
@@ -149,23 +150,22 @@ public class ProductServiceImpl implements ProductService
     @Override
     public ApiResponseDto<ProductResponseDto> updateProduct(Long id, AddProductDto productDto, MultipartFile imageFile) throws Exception {
         Product product = productRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Product not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
 
-        // ✅ If category is updated
+
         if (productDto.getCategoryId() != null) {
             ProductCategory category = categoryRepository.findById(productDto.getCategoryId())
-                    .orElseThrow(() -> new RuntimeException("Category not found"));
+                    .orElseThrow(() -> new ResourceNotFoundException("Category not found"));
             product.setCategory(category);
         }
 
-        // ✅ Update basic fields
+
         if (productDto.getName() != null && !productDto.getName().isBlank()) product.setName(productDto.getName());
         if (productDto.getProdDescription() != null) product.setProdDescription(productDto.getProdDescription());
         if (productDto.getPrice() != null) product.setPrice(productDto.getPrice());
         if (productDto.getRewardPts() != null) product.setRewardPts(productDto.getRewardPts());
         if (productDto.getThreshold() != null) product.setThreshold(productDto.getThreshold());
 
-        // ✅ If new image provided, upload to Cloudinary
         if (imageFile != null && !imageFile.isEmpty()) {
             Cloudinary cloudinary = cloudinaryConfig.cloudinary();
             Map uploadResult = cloudinary.uploader().upload(imageFile.getBytes(),

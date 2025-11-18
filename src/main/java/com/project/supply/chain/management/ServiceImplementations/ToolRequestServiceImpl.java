@@ -2,22 +2,18 @@ package com.project.supply.chain.management.ServiceImplementations;
 
 import com.project.supply.chain.management.Repositories.*;
 import com.project.supply.chain.management.ServiceInterfaces.ToolRequestService;
-import com.project.supply.chain.management.constants.Expensive;
 import com.project.supply.chain.management.constants.Role;
 import com.project.supply.chain.management.constants.ToolIssuanceStatus;
 import com.project.supply.chain.management.constants.ToolOrProductRequestStatus;
 import com.project.supply.chain.management.dto.ApiResponseDto;
-import com.project.supply.chain.management.dto.GetToolRequestDto;
 import com.project.supply.chain.management.dto.ToolRequestDto;
 import com.project.supply.chain.management.entity.*;
-import com.project.supply.chain.management.specifications.ToolRequestSpecifications;
+import com.project.supply.chain.management.exceptions.ResourceNotFoundException;
+import com.project.supply.chain.management.exceptions.UnauthorizedAccessException;
+import com.project.supply.chain.management.exceptions.UserNotFoundException;
+import com.project.supply.chain.management.util.ApplicationUtils;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
@@ -26,7 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-@Service
+    @Service
     @RequiredArgsConstructor
     @Transactional
     public class ToolRequestServiceImpl implements ToolRequestService {
@@ -37,27 +33,26 @@ import java.util.List;
     private final ToolStockRepository toolStockRepository;
     private final ToolIssuanceRepository toolIssuanceRepository;
     private final UserFactoryMappingRepository userFactoryMappingRepository;
+    private final ApplicationUtils appUtils;
 
-    // -------------------------- WORKER CREATES REQUEST --------------------------
+    //      WORKER CREATES REQUEST
     @Override
     @Transactional
     public ApiResponseDto<String> requestTool(ToolRequestDto dto) {
+        User worker = appUtils.getUser(appUtils.getLoggedInUserEmail());
 
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        User worker = userRepository.findByEmail(email);
-
-        if (worker == null) throw new RuntimeException("User not found");
+        if (worker == null) throw new UserNotFoundException("User not found");
         if (worker.getRole() != Role.WORKER)
-            throw new RuntimeException("Only workers can request tools");
+            throw new UnauthorizedAccessException("Only workers can request tools");
 
         List<Long> toolIds = dto.getToolIds();
         List<Integer> quantities = dto.getQuantities();
 
         if (toolIds == null || toolIds.isEmpty())
-            throw new RuntimeException("Tool list cannot be empty");
+            throw new IllegalArgumentException("Tool list cannot be empty");
 
         if (quantities == null || quantities.size() != toolIds.size())
-            throw new RuntimeException("Tool IDs and quantities must match");
+            throw new IllegalArgumentException("Tool IDs and quantities must match");
         List<ToolRequestItem> expensiveItems = new ArrayList<>();
         List<ToolRequestItem> normalItems = new ArrayList<>();
 
@@ -68,10 +63,10 @@ import java.util.List;
             Integer qty = quantities.get(i);
 
             Tool tool = toolRepository.findById(toolId)
-                    .orElseThrow(() -> new RuntimeException("Tool not found with ID: " + toolId));
+                    .orElseThrow(() -> new ResourceNotFoundException("Tool not found with ID: " + toolId));
 
             if (qty == null || qty <= 0)
-                throw new RuntimeException("Quantity must be greater than 0");
+                throw new IllegalArgumentException("Quantity must be greater than 0");
 
             ToolRequestItem item = new ToolRequestItem();
             item.setTool(tool);
@@ -91,7 +86,7 @@ import java.util.List;
         if (!normalItems.isEmpty())
             createToolRequest(worker, normalItems);
 
-        return new ApiResponseDto<>(true, "Tool request(s) submitted successfully", null);
+        return new ApiResponseDto<>(true, "Tool request submitted successfully", null);
     }
 
     private void createToolRequest(User worker, List<ToolRequestItem> items) {
@@ -109,33 +104,32 @@ import java.util.List;
     }
 
 
-    // ------------------------- APPROVER HANDLES REQUEST -------------------------
+    //   APPROVER HANDLES REQUEST -------------------------
     @Override
     @Transactional
     public ApiResponseDto<String> handleToolRequest(Long requestId, boolean approve, String reason) {
+        User approver =  appUtils.getUser(appUtils.getLoggedInUserEmail());
 
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        User approver = userRepository.findByEmail(email);
 
         if (approver == null)
-            throw new RuntimeException("User not found");
+            throw new UserNotFoundException("User not found");
 
         ToolRequest request = toolRequestRepository.findById(requestId)
-                .orElseThrow(() -> new RuntimeException("Tool request not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Tool request not found"));
 
         List<ToolRequestItem> items = request.getToolItems();
 
         boolean hasExpensiveTool = items.stream()
                 .anyMatch(i -> i.getTool().getIsExpensive().name().equalsIgnoreCase("YES"));
 
-        // 🔐 Role validation
+
         if (hasExpensiveTool && approver.getRole() != Role.PLANT_HEAD)
-            throw new RuntimeException("Only Plant Head can approve expensive tool requests");
+            throw new UnauthorizedAccessException("Only Plant Head can approve expensive tool requests");
 
         if (!hasExpensiveTool && approver.getRole() != Role.CHIEF_SUPERVISOR)
-            throw new RuntimeException("Only Chief Supervisor can approve normal tool requests");
+            throw new UnauthorizedAccessException("Only Chief Supervisor can approve normal tool requests");
 
-        // ❌ Reject
+        //  Reject
         if (!approve) {
             request.setStatus(ToolOrProductRequestStatus.REJECTED);
             request.setRejectionReason(reason);
@@ -147,7 +141,7 @@ import java.util.List;
         }
 
         UserFactoryMapping mapping = userFactoryMappingRepository.findByUser(request.getWorker())
-                .orElseThrow(() -> new RuntimeException("Worker is not mapped to any factory"));
+                .orElseThrow(() -> new UnauthorizedAccessException("Worker is not mapped to any factory"));
 
         Factory factory = mapping.getFactory();
 
@@ -157,10 +151,10 @@ import java.util.List;
             Tool tool = item.getTool();
 
             ToolStock stock = toolStockRepository.findByToolAndFactory(tool, factory)
-                    .orElseThrow(() -> new RuntimeException("Tool " + tool.getName() + " not found in factory stock"));
+                    .orElseThrow(() -> new ResourceNotFoundException("Tool " + tool.getName() + " not found in factory stock"));
 
             if (stock.getAvailableQuantity() < item.getQuantity())
-                throw new RuntimeException("Insufficient stock for tool: " + tool.getName());
+                throw new IllegalArgumentException("Insufficient stock for tool: " + tool.getName());
 
             // Update stock
             stock.setAvailableQuantity(stock.getAvailableQuantity() - item.getQuantity());

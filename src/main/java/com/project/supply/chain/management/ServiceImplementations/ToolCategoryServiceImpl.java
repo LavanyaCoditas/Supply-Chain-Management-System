@@ -9,6 +9,8 @@ import com.project.supply.chain.management.dto.ApiResponseDto;
 import com.project.supply.chain.management.dto.ToolCategoryDto;
 import com.project.supply.chain.management.entity.Tool;
 import com.project.supply.chain.management.entity.ToolCategory;
+import com.project.supply.chain.management.exceptions.ResourceAlreadyExistsException;
+import com.project.supply.chain.management.exceptions.ResourceNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,7 +29,7 @@ public class ToolCategoryServiceImpl implements ToolCategoryService {
     public ApiResponseDto<ToolCategoryDto> addToolCategory(AddToolCategoryDto dto) {
 
         if (toolCategoryRepository.existsByNameIgnoreCase(dto.getName())) {
-            return new ApiResponseDto<>(false, "Tool category with this name already exists", null);
+            throw  new ResourceAlreadyExistsException( "Tool category with this name already exists");
         }
 
         ToolCategory category = new ToolCategory();
@@ -50,7 +52,7 @@ public class ToolCategoryServiceImpl implements ToolCategoryService {
         List<ToolCategory> categories = toolCategoryRepository.findAll();
 
         if (categories.isEmpty()) {
-            return new ApiResponseDto<>(false, "No tool categories found", null);
+            throw  new ResourceNotFoundException( "No tool categories found");
         }
 
         List<ToolCategoryDto> dtoList = categories.stream()
@@ -67,12 +69,12 @@ public class ToolCategoryServiceImpl implements ToolCategoryService {
     public ApiResponseDto<ToolCategoryDto> updateToolCategory(Long id, AddToolCategoryDto dto) {
 
         ToolCategory category = toolCategoryRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Tool category not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Tool category not found"));
 
         if (dto.getName() != null &&
                 !dto.getName().equalsIgnoreCase(category.getName()) &&
                 toolCategoryRepository.existsByNameIgnoreCase(dto.getName())) {
-            return new ApiResponseDto<>(false, "Tool category with this name already exists", null);
+            throw  new ResourceAlreadyExistsException( "Tool category with this name already exists");
         }
 
         if (dto.getName() != null) category.setName(dto.getName());
@@ -90,7 +92,6 @@ public class ToolCategoryServiceImpl implements ToolCategoryService {
     }
 
 
-    //delete tool category and the tools under it
     @Override
     @Transactional
     public ApiResponseDto<Void> deleteToolCategory(Long id) {

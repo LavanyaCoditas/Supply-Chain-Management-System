@@ -19,7 +19,7 @@ public class EmailService {
     @Async
     public void sendEmail(String to, String subject, String body) {
         SimpleMailMessage message = new SimpleMailMessage();
-        message.setFrom("lavanyabhosale15@gmail.com"); // sender
+        message.setFrom("lavanyabhosale15@gmail.com");
         message.setTo(to);
         message.setSubject(subject);
         message.setText(body);

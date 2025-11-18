@@ -6,6 +6,9 @@ import com.project.supply.chain.management.constants.Account_Status;
 import com.project.supply.chain.management.constants.Role;
 import com.project.supply.chain.management.dto.*;
 import com.project.supply.chain.management.entity.*;
+import com.project.supply.chain.management.exceptions.ResourceNotFoundException;
+import com.project.supply.chain.management.exceptions.UnauthorizedAccessException;
+import com.project.supply.chain.management.exceptions.UserNotFoundException;
 import com.project.supply.chain.management.specifications.EmployeeSpecifications;
 import com.project.supply.chain.management.util.ApplicationUtils;
 import jakarta.transaction.Transactional;
@@ -23,6 +26,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.InputMismatchException;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -37,19 +41,17 @@ public class PlantHeadServiceImpl implements PlantHeadService {
 
     private final BayRepository bayRepository;
 
-   private final FactoryRepository factoryRepository;
-
     private  final UserRepository userRepository;
 
-   private final UserFactoryMappingRepository userFactoryMappingRepository;
+    private final UserFactoryMappingRepository userFactoryMappingRepository;
 
     private final PasswordEncoder passwordEncoder;
 
     private final EmailService emailService;
 
     private final ApplicationUtils appUtils;
-    private final FactoryProductionRepository factoryProductionRepository;
 
+    private final FactoryProductionRepository factoryProductionRepository;
 
     private final FactoryInventoryStockRepository factoriesInventoryStockRepository;
 
@@ -59,28 +61,26 @@ public class PlantHeadServiceImpl implements PlantHeadService {
 
         User plantHead =appUtils.getUser(appUtils.getLoggedInUserEmail());
         if (plantHead == null) {
-            throw new RuntimeException("Logged-in Plant Head not found");
+            throw new UserNotFoundException("User not found");
         }
 
         //  Verify that the Plant Head is mapped to a factory
         UserFactoryMapping mapping = userFactoryMappingRepository.findByUser(plantHead)
-                .orElseThrow(() -> new RuntimeException("Plant Head is not mapped to any factory"));
+                .orElseThrow(() -> new UnauthorizedAccessException("Plant Head is not mapped to any factory"));
 
-        //  Ensure Plant Head is actually assigned to a factory
+
         Optional<UserFactoryMapping> optionalMapping = userFactoryMappingRepository.findByUser(plantHead);
         if (optionalMapping.isEmpty() || optionalMapping.get().getFactory() == null) {
-            throw new RuntimeException("Bay cannot be created — Plant Head is not mapped to any factory");
+            throw new UnauthorizedAccessException("Bay cannot be created — Plant Head is not mapped to any factory");
         }
 
         Factory factory = optionalMapping.get().getFactory();
 
-        // Validate that bay name doesn’t already exist in the same factory
+        // bay name doesn’t already exist in the same factory
         boolean exists = bayRepository.existsByNameAndFactory(request.getBayName(), factory);
         if (exists) {
-            throw new RuntimeException("A bay with this name already exists in the factory");
+            throw new UnsupportedOperationException("A bay with this name already exists in the factory");
         }
-
-        //  Create new bay only if all checks pass
         Bay bay = new Bay();
         bay.setName(request.getBayName());
         bay.setFactory(factory);
@@ -99,19 +99,19 @@ public class PlantHeadServiceImpl implements PlantHeadService {
 
         User plantHead=appUtils.getUser(appUtils.getLoggedInUserEmail());
         if (plantHead == null) {
-            throw new RuntimeException(" Plant Head not found");
+            throw new UserNotFoundException(" Plant Head not found");
         }
 
-        //  Find factory mapped to this plant head
+        //  Find factory
         UserFactoryMapping mapping = userFactoryMappingRepository.findByUser(plantHead)
-                .orElseThrow(() -> new RuntimeException("Plant Head is not mapped to any factory"));
+                .orElseThrow(() -> new UnauthorizedAccessException("Plant Head is not mapped to any factory"));
 
         Factory factory = mapping.getFactory();
 
-        // Fetch bays for this factory
+        // Fetch bays
         List<Bay> bays = bayRepository.findByFactory(factory);
 
-        // Convert to DTO
+
         List<BayListdto> bayDtos = bays.stream()
                 .map(bay -> {
                     BayListdto dto = new BayListdto();
@@ -131,28 +131,27 @@ public class PlantHeadServiceImpl implements PlantHeadService {
     {
         User plantHead=appUtils.getUser(appUtils.getLoggedInUserEmail());
         if (plantHead == null) {
-            throw new RuntimeException("Logged-in Plant Head not found");
+            throw new UserNotFoundException("Logged-in Plant Head not found");
         }
 
         //  Verify that the Plant Head is mapped to a factory
         UserFactoryMapping mapping = userFactoryMappingRepository.findByUser(plantHead)
-                .orElseThrow(() -> new RuntimeException("Plant Head is not mapped to any factory"));
+                .orElseThrow(() -> new UserNotFoundException("Plant Head is not mapped to any factory"));
         Factory factory = mapping.getFactory();
 
         //  Ensure only one Chief Supervisor per factory
         if (request.getRole() == Role.CHIEF_SUPERVISOR) {
             boolean exists = userFactoryMappingRepository.existsByFactoryAndAssignedRole(factory, Role.CHIEF_SUPERVISOR);
             if (exists) {
-                throw new RuntimeException("This factory already has a Chief Supervisor");
+                throw new UnsupportedOperationException("This factory already has a Chief Supervisor");
             }
         }
 
-        //  Check for duplicate email
+
         if (userRepository.findByEmail(request.getEmail()) != null) {
-            throw new RuntimeException("User with this email already exists");
+            throw new UnauthorizedAccessException("User with this email already exists");
         }
 
-        //  Create new user
         User newUser = new User();
         newUser.setUsername(request.getName());
         newUser.setEmail(request.getEmail());
@@ -160,9 +159,6 @@ public class PlantHeadServiceImpl implements PlantHeadService {
         newUser.setRole(request.getRole());
         newUser.setPhone(request.getPhone());
         newUser.setIsActive(Account_Status.ACTIVE);
-
-        // Optional: add image if sent in request
-
 
         userRepository.save(newUser);
 
@@ -178,7 +174,7 @@ public class PlantHeadServiceImpl implements PlantHeadService {
                     .orElseThrow(() -> new RuntimeException("Bay not found"));
 
             if (!bay.getFactory().getId().equals(factory.getId())) {
-                throw new RuntimeException("Bay does not belong to this factory");
+                throw new ResourceNotFoundException("Bay does not belong to this factory");
             }
 
             employeeMapping.setBayId(bay);
@@ -186,10 +182,8 @@ public class PlantHeadServiceImpl implements PlantHeadService {
 
         userFactoryMappingRepository.save(employeeMapping);
 
-        //  Send email
         sendEmailToEmployee(newUser, factory, request.getRole(), bay);
 
-        //  Build response DTO
         UserResponseDto responseDto = new UserResponseDto(
                 newUser.getId(),
                 newUser.getUsername(),
@@ -198,7 +192,7 @@ public class PlantHeadServiceImpl implements PlantHeadService {
                 newUser.getRole().name(),
                 factory.getName(),
                 bay != null ? bay.getName() : null,
-                newUser.getImg() // ✅ Added image to response
+                newUser.getImg()
         );
 
         return new ApiResponseDto<>(
@@ -235,25 +229,25 @@ public class PlantHeadServiceImpl implements PlantHeadService {
     {
         User plantHead =appUtils.getUser(appUtils.getLoggedInUserEmail());
         if (plantHead == null) {
-            throw new RuntimeException("Plant Head not found");
+            throw new UserNotFoundException("Plant Head not found");
         }
 
-        //2. Verify Plant Head is mapped to a factory
+        // Verify Plant Head is mapped to a factory
         Factory factory = userFactoryMappingRepository.findByUser(plantHead)
                 .map(UserFactoryMapping::getFactory)
-                .orElseThrow(() -> new RuntimeException("Plant Head is not mapped to any factory"));
+                .orElseThrow(() -> new UnauthorizedAccessException("Plant Head is not mapped to any factory"));
 
-        // 3. Parse role filter (optional)
+        // Parse role filter (optional)
         Role role = null;
         if (roleStr != null && !roleStr.isBlank()) {
             try {
                 role = Role.valueOf(roleStr.toUpperCase());
             } catch (IllegalArgumentException e) {
-                throw new RuntimeException("Invalid role provided: " + roleStr);
+                throw new IllegalArgumentException("Invalid role provided: " + roleStr);
             }
         }
 
-        // 4. Build dynamic specification
+        // dynamic specification
         Specification<UserFactoryMapping> spec = Specification.allOf(
                 EmployeeSpecifications.belongsToFactory(factory),
                 EmployeeSpecifications.hasRole(role),
@@ -276,7 +270,7 @@ public class PlantHeadServiceImpl implements PlantHeadService {
                     mapping.getAssignedRole() != null ? mapping.getAssignedRole().toString() : "N/A",
                     mapping.getFactory() != null ? mapping.getFactory().getName() : null,
                     mapping.getBayId() != null ? mapping.getBayId().getName() : null,
-                    user.getImg() != null ? user.getImg() : null // ✅ add image here
+                    user.getImg() != null ? user.getImg() : null
             );
         });
 
@@ -292,24 +286,24 @@ public class PlantHeadServiceImpl implements PlantHeadService {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         User plantHead = userRepository.findByEmail(email);
         if (plantHead == null) {
-            throw new RuntimeException("Plant Head not found");
+            throw new UserNotFoundException("Plant Head not found");
         }
 
         //  Verify that the user is mapped to a factory
         UserFactoryMapping mapping = userFactoryMappingRepository.findByUser(plantHead)
-                .orElseThrow(() -> new RuntimeException("Plant Head is not mapped to any factory"));
+                .orElseThrow(() -> new IllegalArgumentException("Plant Head is not mapped to any factory"));
         Factory factory = mapping.getFactory();
 
         //  Validate Product
         Product product = productRepository.findById(request.getProductId())
-                .orElseThrow(() -> new RuntimeException("Product not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
 
-        //  Find existing or create new stock record
+        //  stock record
         FactoriesInventoryStock stock = factoriesInventoryStockRepository
                 .findByFactoryAndProduct(factory, product)
                 .orElse(new FactoriesInventoryStock(null,factory, product, 0, plantHead));
 
-        // Update stock quantity
+        // Update stock
         stock.setQty(stock.getQty() + request.getQuantityProduced());
         stock.setAddedBy(plantHead);
         factoriesInventoryStockRepository.save(stock);
@@ -329,12 +323,11 @@ public class PlantHeadServiceImpl implements PlantHeadService {
 
         User plantHead =appUtils.getUser(appUtils.getLoggedInUserEmail());
         if (plantHead == null) {
-            throw new RuntimeException("Plant Head not found");
+            throw new UserNotFoundException("Plant Head not found");
         }
 
-        // Get factory assigned to plant head
         UserFactoryMapping mapping = userFactoryMappingRepository.findByUser(plantHead)
-                .orElseThrow(() -> new RuntimeException("Plant Head is not mapped to any factory"));
+                .orElseThrow(() -> new IllegalArgumentException("Plant Head is not mapped to any factory"));
 
         Factory factory = mapping.getFactory();
 
@@ -372,21 +365,21 @@ public class PlantHeadServiceImpl implements PlantHeadService {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         User plantHead = userRepository.findByEmail(email);
         if (plantHead == null) {
-            throw new RuntimeException("Plant Head not found");
+            throw new UserNotFoundException("Plant Head not found");
         }
 
         // Verify mapping to factory
         UserFactoryMapping mapping = userFactoryMappingRepository.findByUser(plantHead)
-                .orElseThrow(() -> new RuntimeException("Plant Head is not mapped to any factory"));
+                .orElseThrow(() -> new IllegalArgumentException("Plant Head is not mapped to any factory"));
         Factory factory = mapping.getFactory();
 
-        //  Get all global products (added by owner)
+
         List<Product> allProducts = productRepository.findAll();
 
         // Get stock entries for that factory
         List<FactoriesInventoryStock> factoryStocks = factoriesInventoryStockRepository.findAllByFactory(factory);
 
-        // Combine both: calculate low stock products
+        //  low stock products
         List<FactoryProductStockResponseDto> lowStockProducts = allProducts.stream()
                 .map(product -> {
                     // Try to find stock entry for this product
@@ -395,7 +388,7 @@ public class PlantHeadServiceImpl implements PlantHeadService {
                             .findFirst()
                             .orElse(null);
 
-                    // Use 0 if no record exists
+                    //  0 if no record exists
                     int qty = (stock != null && stock.getQty() != null) ? stock.getQty() : 0;
                     Long threshold = product.getThreshold();
 
@@ -410,7 +403,7 @@ public class PlantHeadServiceImpl implements PlantHeadService {
                             product.getRewardPts()
                     );
                 })
-                // Filter only those below or equal to threshold
+                // below or equal to threshold
                 .filter(dto -> dto.getThreshold() != null && dto.getCurrentQty() <= dto.getThreshold())
                 .collect(Collectors.toList());
 
