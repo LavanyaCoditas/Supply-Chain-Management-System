@@ -198,12 +198,5 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errorResponseDto,HttpStatus.CONFLICT);
     }
 
-    //    @ExceptionHandler(EmailAlreadyExistException.class)
-//    public ResponseEntity<Map<String, Object>> handleEmailAlreadyExists(EmailAlreadyExistException ex) {
-//        Map<String, Object> errors = new HashMap<>();
-//        errors.put("timestamp", LocalDateTime.now());
-//        errors.put("message", ex.getMessage());
-//        errors.put("status", HttpStatus.CONFLICT.value());
-//        return new ResponseEntity<>(errors, HttpStatus.CONFLICT);
-//    }
+
 }

@@ -60,7 +60,7 @@ public class ProductController
     // Chief Officer creates restock request
 
     @GetMapping("/central-office/get-inventory")
-    @PreAuthorize("hasAnyRole('OWNER', 'CENTRAL_OFFICE')")
+    @PreAuthorize("hasAnyAuthority('OWNER', 'CENTRAL_OFFICE')")
     public ApiResponseDto<Page<CentralOfficeInventoryDto>> getCentralOfficeInventory(
             @RequestParam(required = false) Long productId,
             @RequestParam(required = false) String productName,
@@ -72,28 +72,28 @@ public class ProductController
                 productId, productName, minQuantity, maxQuantity, requestDto);
     }
 
-    @PreAuthorize("hasRole('CENTRAL_OFFICE')")
+    @PreAuthorize("hasAuthority('CENTRAL_OFFICE')")
     @PostMapping("/central-office/create/restock-request")
     public ApiResponseDto<ProductRestockRequestDto> createRestockRequest(
             @RequestBody CreateRestockRequestDto requestDto) {
         return productRestockRequestService.createRestockRequest(requestDto);
     }
 
-    @PreAuthorize("hasRole('PLANT_HEAD')")
+    @PreAuthorize("hasAuthority('PLANT_HEAD')")
     @PutMapping("/factory/restock-requests/{requestId}/complete")
     public ApiResponseDto<ProductRestockRequestDto> completeRestockRequest(
             @PathVariable Long requestId) {
         return productRestockRequestService.completeRestockRequest(requestId);
     }
 
-    @PreAuthorize("hasRole('PLANT_HEAD')")
+    @PreAuthorize("hasAuthority('PLANT_HEAD')")
     @PostMapping("/factories/stock/production")
     public ApiResponseDto<String> updateStockDirectly(
             @RequestBody UpdateProductStockDto stockDto) {
         return productRestockRequestService.updateStockDirectly(stockDto);
     }
 
-    @PreAuthorize("hasRole('CENTRAL_OFFICE')")
+    @PreAuthorize("hasAuthority('CENTRAL_OFFICE')")
     @GetMapping("/central-office/get/restock-requests")
     public ApiResponseDto<Page<ProductRestockRequestDto>> getMyRestockRequests(
             @RequestParam(required = false) ToolOrProductRequestStatus status,
@@ -101,7 +101,7 @@ public class ProductController
         return productRestockRequestService.getMyRestockRequests(status, requestDto);
     }
 
-    @PreAuthorize("hasAnyRole('PLANT_HEAD', 'OWNER')")
+    @PreAuthorize("hasAnyAuthority('PLANT_HEAD', 'OWNER')")
     @GetMapping("/factories/get/restock-requests")
     public ApiResponseDto<Page<ProductRestockRequestDto>> getMyFactoryRestockRequests(
             @RequestParam(required = false) ToolOrProductRequestStatus status,

@@ -152,7 +152,7 @@ public class ProductRestockRequestServiceImpl implements ProductRestockRequestSe
 
             Long factoryId = getCurrentUserFactoryId(currentUser);
             if (factoryId == null) {
-                return new ApiResponseDto<>(false, "Manager is not assigned to any factory", null);
+                return new ApiResponseDto<>(false, "Plant head is not assigned to any factory", null);
             }
 
             Factory factory = factoryRepository.findById(factoryId)

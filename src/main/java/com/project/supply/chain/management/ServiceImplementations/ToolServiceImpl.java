@@ -236,4 +236,20 @@ public class ToolServiceImpl implements ToolService {
         return new ApiResponseDto<>(true, "Tools fetched successfully", dtos);
     }
 
+    @Override
+    public ApiResponseDto<String> softDeleteTool(Long id) {
+        Tool tool = toolRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Tool not found"));
+
+        if (tool.getIsActive() == Account_Status.IN_ACTIVE) {
+            return new ApiResponseDto<>(false, "Already inactive", null);
+        }
+        tool.setIsActive(Account_Status.IN_ACTIVE);
+        tool.setUpdatedAt(LocalDateTime.now());
+        toolRepository.save(tool);
+        return new ApiResponseDto<>(true, "Tool deleted", "INACTIVE");
+    }
+
+
+
 }

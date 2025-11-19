@@ -13,10 +13,12 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.nio.file.attribute.UserPrincipal;
 import java.util.List;
 
 @RestController
@@ -104,7 +106,10 @@ public class ToolController
         return ResponseEntity.ok(response);
     }
 
-
+    @DeleteMapping("/delete/{id}")
+    public ResponseEntity<ApiResponseDto<String>> softDeleteTool(@PathVariable Long id) {
+        return ResponseEntity.ok(toolService.softDeleteTool(id));
+    }
     @PostMapping("/factory/stock/add")
     @PreAuthorize("hasAuthority('PLANT_HEAD')")
     public ResponseEntity<ApiResponseDto<String>> addToolToFactoryStock(@RequestBody ToolInventoryStockDto dto) {
@@ -129,4 +134,15 @@ public class ToolController
 
         return ResponseEntity.ok(toolRequestService.handleToolRequest(requestId, approve, reason));
     }
+
+
+    //Tool return
+
+//    @PostMapping("/worker/return")
+//    public ResponseEntity<ApiResponseDto<String>> requestReturn(
+//            @RequestBody WorkerReturnRequestDto dto,
+//            @AuthenticationPrincipal UserPrincipal currentUser
+//    ) {
+//        return ResponseEntity.ok(toolService.requestReturn(dto, currentUser));
+//    }
 }

@@ -170,7 +170,6 @@ import java.util.List;
             issuance.setStatus(ToolIssuanceStatus.ISSUED);
             toolIssuanceRepository.save(issuance);
         }
-
         // Update request
         request.setStatus(ToolOrProductRequestStatus.APPROVED);
         request.setApprovedBy(approver);

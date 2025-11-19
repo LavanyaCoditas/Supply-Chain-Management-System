@@ -21,4 +21,6 @@ public interface ToolService {
             String sortBy,
             String sortDir);
 
+    public ApiResponseDto<String> softDeleteTool(Long id);
+
 }
