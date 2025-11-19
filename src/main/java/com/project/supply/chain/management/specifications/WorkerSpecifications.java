@@ -12,7 +12,7 @@ import org.springframework.data.jpa.domain.Specification;
 
 public class WorkerSpecifications {
 
-    //Search workers by name (case-insensitive)
+    //Search workers by name
     public static Specification<UserFactoryMapping> searchByWorkerName(String name) {
         return (root, query, cb) -> {
             if (name == null || name.isBlank()) return cb.conjunction();

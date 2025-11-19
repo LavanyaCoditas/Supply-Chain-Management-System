@@ -15,5 +15,5 @@ public class UserResponseDto {
     private String role;
     private String factoryName;
     private String bayName;
-    private String  img;// null for Chief Supervisor
+    private String  img;
 }

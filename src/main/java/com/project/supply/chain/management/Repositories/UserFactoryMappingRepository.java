@@ -13,11 +13,12 @@ import java.util.Optional;
 @Repository
 public interface UserFactoryMappingRepository extends JpaRepository<UserFactoryMapping,Long>, JpaSpecificationExecutor<UserFactoryMapping> {
     Optional<UserFactoryMapping> findByUser(User user);
-    // Find mapping by user (used for plant head)
 
+    // Find mapping by user
     boolean existsByUser(User user);
+
     Long countByFactory(Factory factory);
 
-    // Check if a Chief Supervisor already exists for a factory
+    //Chief Supervisor already exists for a factory
     boolean existsByFactoryAndAssignedRole(Factory factory, Role assignedRole);
 }

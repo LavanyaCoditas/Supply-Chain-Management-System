@@ -8,14 +8,7 @@ import lombok.Setter;
 
 public class SignupResponseDto
 {
-
-
-
-        private String message; // Message indicating the result of the signup
-        private String email;   // Email of the user
+        private String message;
+        private String email;
         private Role role;
-
-//        private String imageUrl;
-
-
 }

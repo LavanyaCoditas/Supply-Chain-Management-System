@@ -43,54 +43,50 @@ public class ProductServiceImpl implements ProductService
 
 
     @Override
-    public ApiResponseDto<ProductResponseDto> uploadProductWithImage(AddProductDto productDto, MultipartFile imageFile) throws FileUploadException {
-        try {
+    public ApiResponseDto<ProductResponseDto> uploadProduct(AddProductDto productDto, MultipartFile imageFile) throws IOException {
 
-            Optional<Product> existingProduct = productRepository.findByNameIgnoreCase(productDto.getName());
-            if (existingProduct.isPresent()) {
-                throw  new ResourceAlreadyExistsException("A product with this name already exists: " + productDto.getName());
-            }
-
-            Cloudinary cloudinary = cloudinaryConfig.cloudinary();
-            Map uploadResult = cloudinary.uploader().upload(imageFile.getBytes(),
-                    ObjectUtils.asMap("folder", "products"));
-            String imageUrl = (String) uploadResult.get("secure_url");
-
-            //  Get category
-            ProductCategory category = categoryRepository.findById(productDto.getCategoryId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Category not found"));
-
-
-            Product product = new Product();
-            product.setName(productDto.getName().trim());
-            product.setProdDescription(productDto.getProdDescription());
-            product.setPrice(productDto.getPrice());
-            product.setRewardPts(productDto.getRewardPts());
-            product.setCategory(category);
-            product.setThreshold(productDto.getThreshold());
-            product.setImage(imageUrl);
-            product.setIsActive(Account_Status.ACTIVE);
-
-            Product savedProduct = productRepository.save(product);
-
-            ProductResponseDto responseDto = new ProductResponseDto(
-                    savedProduct.getId(),
-                    savedProduct.getName(),
-                    savedProduct.getProdDescription(),
-                    savedProduct.getPrice(),
-                    savedProduct.getRewardPts(),
-                    savedProduct.getCategory().getCategoryName(),
-                    savedProduct.getThreshold(),
-                    savedProduct.getImage(),
-                    savedProduct.getIsActive()
-            );
-
-            return new ApiResponseDto<>(true, "Product uploaded successfully", responseDto);
-        } catch (IOException e) {
-            return new ApiResponseDto<>(false, "Image upload failed: " + e.getMessage(), null);
-        } catch (Exception e) {
-            throw  new FileUploadException( "Error uploading product: " + e.getMessage());
+        Optional<Product> existingProduct = productRepository.findByNameIgnoreCase(productDto.getName());
+        if (existingProduct.isPresent()) {
+            throw new ResourceAlreadyExistsException("A product with this name already exists: " + productDto.getName());
         }
+
+        Cloudinary cloudinary = cloudinaryConfig.cloudinary();
+        Map uploadResult = cloudinary.uploader().upload(
+                imageFile.getBytes(),
+                ObjectUtils.asMap("folder", "products")
+        );
+        String imageUrl = (String) uploadResult.get("secure_url");
+
+
+        ProductCategory category = categoryRepository.findById(productDto.getCategoryId())
+                .orElseThrow(() -> new ResourceNotFoundException("Category not found"));
+
+
+        Product product = new Product();
+        product.setName(productDto.getName().trim());
+        product.setProdDescription(productDto.getProdDescription());
+        product.setPrice(productDto.getPrice());
+        product.setRewardPts(productDto.getRewardPts());
+        product.setCategory(category);
+        product.setThreshold(productDto.getThreshold());
+        product.setImage(imageUrl);
+        product.setIsActive(Account_Status.ACTIVE);
+
+        Product savedProduct = productRepository.save(product);
+
+        ProductResponseDto responseDto = new ProductResponseDto(
+                savedProduct.getId(),
+                savedProduct.getName(),
+                savedProduct.getProdDescription(),
+                savedProduct.getPrice(),
+                savedProduct.getRewardPts(),
+                savedProduct.getCategory().getCategoryName(),
+                savedProduct.getThreshold(),
+                savedProduct.getImage(),
+                savedProduct.getIsActive()
+        );
+
+        return new ApiResponseDto<>(true, "Product uploaded successfully", responseDto);
     }
 
     @Override

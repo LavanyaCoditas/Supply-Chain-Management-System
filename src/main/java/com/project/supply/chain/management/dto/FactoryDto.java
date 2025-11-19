@@ -20,8 +20,7 @@ private Long factoryId;
         private String name;
         private String city;
         private String address;
-         // will map to CentralOffice entity
-        private String plantHeadEmail; // optional field
+        private String plantHeadEmail;
 
 
 }

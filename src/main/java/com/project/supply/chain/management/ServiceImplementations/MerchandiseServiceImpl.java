@@ -152,8 +152,6 @@ import java.util.Map;
         }
 
 
-
-
         @Override
         public ApiResponseDto<Void> softDeleteMerchandise(Long id) {
             Merchandise merchandise = merchandiseRepository.findById(id)

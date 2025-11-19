@@ -1,5 +1,5 @@
 package com.project.supply.chain.management.Repositories;
-//package com.project.supply.chain.management.repository;
+
 
 import com.project.supply.chain.management.entity.OrderItem;
 import org.springframework.data.jpa.repository.JpaRepository;

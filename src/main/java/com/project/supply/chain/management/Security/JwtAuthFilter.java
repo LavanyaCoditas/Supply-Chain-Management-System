@@ -2,6 +2,7 @@ package com.project.supply.chain.management.Security;
 
 import com.project.supply.chain.management.ServiceImplementations.TokenBlacklistService;
 import com.project.supply.chain.management.util.AuthUtil;
+import io.jsonwebtoken.MalformedJwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -35,7 +36,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         String path = request.getRequestURI();
 
 
-        if (path.equals("/api/auth/login") || path.equals("/api/auth/signup")) {
+        if (path.startsWith("/api/auth/")) {
             filterChain.doFilter(request, response);
             return;
         }
@@ -55,7 +56,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.setContentType("application/json");
             response.getWriter().write("{\"success\":false, \"message\":\"Token has been revoked. Please log in again.\"}");
-            return;
+           throw new MalformedJwtException("token is not correct or blaclisted");
         }
 
 

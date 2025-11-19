@@ -237,14 +237,12 @@ public class PlantHeadServiceImpl implements PlantHeadService {
                 .map(UserFactoryMapping::getFactory)
                 .orElseThrow(() -> new UnauthorizedAccessException("Plant Head is not mapped to any factory"));
 
-        // Parse role filter (optional)
+
         Role role = null;
         if (roleStr != null && !roleStr.isBlank()) {
-            try {
                 role = Role.valueOf(roleStr.toUpperCase());
-            } catch (IllegalArgumentException e) {
                 throw new IllegalArgumentException("Invalid role provided: " + roleStr);
-            }
+
         }
 
         // dynamic specification
@@ -256,10 +254,10 @@ public class PlantHeadServiceImpl implements PlantHeadService {
 
         Pageable pageable = PageRequest.of(page, size, Sort.by("user.username").ascending());
 
-        // 5. Fetch paginated employee data
+        // Fetch paginated employee data
         Page<UserFactoryMapping> mappings = userFactoryMappingRepository.findAll(spec, pageable);
 
-        //6. Map entity -> DTO (now includes image)
+
         Page<UserResponseDto> response = mappings.map(mapping -> {
             User user = mapping.getUser();
             return new UserResponseDto(
@@ -282,9 +280,7 @@ public class PlantHeadServiceImpl implements PlantHeadService {
     @Override
     @Transactional
     public ApiResponseDto<Void> updateFactoryProductStock(UpdateStockRequestDto request) {
-        // 1. Get logged-in Plant Head
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        User plantHead = userRepository.findByEmail(email);
+        User plantHead = appUtils.getUser(appUtils.getLoggedInUserEmail());
         if (plantHead == null) {
             throw new UserNotFoundException("Plant Head not found");
         }
@@ -331,13 +327,13 @@ public class PlantHeadServiceImpl implements PlantHeadService {
 
         Factory factory = mapping.getFactory();
 
-        //  Get all products from owner (assumed global)
+        //  Get all product s from owner
         List<Product> allProducts = productRepository.findAll();
 
-        //  Get stock entries for that factory
+        //  Get stock entry for that factory
         List<FactoriesInventoryStock> factoryStocks = factoriesInventoryStockRepository.findAllByFactory(factory);
 
-        // Map Product + Stock
+        // Map Product ->Stock
         List<FactoryProductStockResponseDto> result = allProducts.stream().map(product -> {
             Integer qty = factoryStocks.stream()
                     .filter(s -> s.getProduct().getId().equals(product.getId()))
@@ -376,10 +372,10 @@ public class PlantHeadServiceImpl implements PlantHeadService {
 
         List<Product> allProducts = productRepository.findAll();
 
-        // Get stock entries for that factory
+        // Get stock entry
         List<FactoriesInventoryStock> factoryStocks = factoriesInventoryStockRepository.findAllByFactory(factory);
 
-        //  low stock products
+        //  low stock produc
         List<FactoryProductStockResponseDto> lowStockProducts = allProducts.stream()
                 .map(product -> {
                     // Try to find stock entry for this product

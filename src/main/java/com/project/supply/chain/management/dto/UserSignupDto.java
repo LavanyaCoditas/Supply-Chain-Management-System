@@ -17,20 +17,15 @@ public class UserSignupDto {
 
     @NotBlank(message = "Email cannot be empty")
     @Email(message = "Please provide a valid email address")
-    @Pattern(
-            regexp = "^[A-Za-z][A-Za-z0-9._-]*@[A-Za-z0-9.-]+\\.[A-Za-z]{2,6}$",
-            message = "Email must start with a letter, should have @, have valid domain and be valid like example@gmail.com")
+    @Pattern(regexp = "^[A-Za-z][A-Za-z0-9._-]*@[A-Za-z0-9.-]+\\.[A-Za-z]{2,6}$", message = "Email must start with a letter, should have @, have valid domain and be valid like example@gmail.com")
     private String email;
 
-    //alpha numeric , must contain at leat 1 special character and min 6 to 14
+
     @NotBlank(message = "Password is required")
     @Size(min = 6,  message = "Password must be between 6 and 8 characters")
     private String password;
 
-
-//    @NotNull(message = "Profile image cannot be null")
-//    private MultipartFile profileImage;
-
+    @NotNull(message = "phone number required")
     private Long phone;
 
 }

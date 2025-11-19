@@ -61,7 +61,7 @@ public class FactoryServiceImpl implements FactoryService {
             throw  new UserNotFoundException("No user found with this email. Please create a Plant Head first");
         }
 
-        // Verify user role is PLANT_HEAD
+        // Verify user is PLANT_HEAD
         if (existingUser.getRole() != Role.PLANT_HEAD) {
             throw  new UnauthorizedAccessException("User exists but is not a Plant Head. Please assign correct role or create new Plant Head.");
         }
@@ -114,7 +114,7 @@ public class FactoryServiceImpl implements FactoryService {
     String loginUrl = "http://localhost:8080/login";
 
     String subject = "Welcome! You are appointed as Plant Head";
-    //text block usage
+    //text block used
     String body = String.format("""
             Hello %s,
             

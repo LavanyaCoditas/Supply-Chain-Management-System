@@ -11,5 +11,5 @@ public class ProductCategoryResponseDto {
     private Long id;
     private String categoryName;
     private String description;
-    private Integer productCount; // Optional — show how many products belong
+    private Integer productCount;
 }

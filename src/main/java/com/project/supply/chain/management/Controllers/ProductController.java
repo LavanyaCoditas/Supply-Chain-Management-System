@@ -4,6 +4,7 @@ import com.project.supply.chain.management.ServiceInterfaces.ProductRestockReque
 import com.project.supply.chain.management.ServiceInterfaces.ProductService;
 import com.project.supply.chain.management.constants.ToolOrProductRequestStatus;
 import com.project.supply.chain.management.dto.*;
+import jakarta.validation.Valid;
 import org.apache.tomcat.util.http.fileupload.FileUploadException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -11,6 +12,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
 
 @RestController
 @RequestMapping("/api/products")
@@ -24,9 +27,9 @@ public class ProductController
     @PostMapping(value = "/upload", consumes = {"multipart/form-data"})
     public ResponseEntity<ApiResponseDto<ProductResponseDto>> uploadProduct(
             @ModelAttribute AddProductDto productDto,
-            @RequestPart("image") MultipartFile imageFile) throws FileUploadException {
+            @RequestPart("image") MultipartFile imageFile) throws IOException {
 
-        ApiResponseDto<ProductResponseDto> response = productService.uploadProductWithImage(productDto, imageFile);
+        ApiResponseDto<ProductResponseDto> response = productService.uploadProduct(productDto, imageFile);
         return ResponseEntity.ok(response);
     }
 
@@ -58,7 +61,6 @@ public class ProductController
     }
 
     // Chief Officer creates restock request
-
     @GetMapping("/central-office/get-inventory")
     @PreAuthorize("hasAnyAuthority('OWNER', 'CENTRAL_OFFICE')")
     public ApiResponseDto<Page<CentralOfficeInventoryDto>> getCentralOfficeInventory(
@@ -75,7 +77,7 @@ public class ProductController
     @PreAuthorize("hasAuthority('CENTRAL_OFFICE')")
     @PostMapping("/central-office/create/restock-request")
     public ApiResponseDto<ProductRestockRequestDto> createRestockRequest(
-            @RequestBody CreateRestockRequestDto requestDto) {
+            @Valid @RequestBody CreateRestockRequestDto requestDto) {
         return productRestockRequestService.createRestockRequest(requestDto);
     }
 
@@ -88,8 +90,7 @@ public class ProductController
 
     @PreAuthorize("hasAuthority('PLANT_HEAD')")
     @PostMapping("/factories/stock/production")
-    public ApiResponseDto<String> updateStockDirectly(
-            @RequestBody UpdateProductStockDto stockDto) {
+    public ApiResponseDto<String> updateStockDirectly(@Valid @RequestBody UpdateProductStockDto stockDto) {
         return productRestockRequestService.updateStockDirectly(stockDto);
     }
 

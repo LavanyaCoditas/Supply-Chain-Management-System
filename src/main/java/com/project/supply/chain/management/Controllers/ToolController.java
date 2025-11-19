@@ -5,6 +5,7 @@ import com.project.supply.chain.management.ServiceInterfaces.ToolRequestService;
 import com.project.supply.chain.management.ServiceInterfaces.ToolService;
 import com.project.supply.chain.management.constants.ToolOrProductRequestStatus;
 import com.project.supply.chain.management.dto.*;
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -65,7 +66,7 @@ public class ToolController
 
     @PostMapping("/create")
     @PreAuthorize("hasAuthority('OWNER')")
-    public ResponseEntity<ApiResponseDto<ToolResponseDto>> createTool(@RequestBody ToolDto dto) throws IOException {
+    public ResponseEntity<ApiResponseDto<ToolResponseDto>> createTool(@Valid @RequestBody ToolDto dto) throws IOException {
         ApiResponseDto<ToolResponseDto> response = toolService.createTool(dto);
         return ResponseEntity.ok(response);
     }
@@ -84,7 +85,7 @@ public class ToolController
     @PreAuthorize("hasAnyAuthority('OWNER')")
     public ResponseEntity<ApiResponseDto<ToolResponseDto>> updateTool(
             @PathVariable Long toolId,
-            @RequestBody ToolDto dto) {
+            @Valid @RequestBody ToolDto dto) {
         ApiResponseDto<ToolResponseDto> response = toolService.updateTool(toolId, dto);
         return ResponseEntity.ok(response);
     }
@@ -112,7 +113,7 @@ public class ToolController
     }
     @PostMapping("/factory/stock/add")
     @PreAuthorize("hasAuthority('PLANT_HEAD')")
-    public ResponseEntity<ApiResponseDto<String>> addToolToFactoryStock(@RequestBody ToolInventoryStockDto dto) {
+    public ResponseEntity<ApiResponseDto<String>> addToolToFactoryStock(@Valid @RequestBody ToolInventoryStockDto dto) {
         ApiResponseDto<String> response = toolService.addToolToFactoryStock(dto);
         return ResponseEntity.ok(response);
     }

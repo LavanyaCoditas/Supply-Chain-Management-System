@@ -38,8 +38,8 @@ public class AuthService {
             SecretKey key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(jwtSecret));
 
             Claims claims = Jwts.parser()
-                    .verifyWith(key)   // <-- replaces setSigningKey()
-                    .build()           // <-- build() must be called before parsing
+                    .verifyWith(key)
+                    .build()
                     .parseSignedClaims(rawToken)
                     .getPayload();
 

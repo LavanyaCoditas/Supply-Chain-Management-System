@@ -56,7 +56,7 @@ public class ChiefSupervisorServiceImpl implements CheifSupervisorService {
             throw  new InvalidCredentialsException( "User with this email already exists");
         }
 
-        //  Get supervisor’s mapping
+        //  Get supervisor mapping
         UserFactoryMapping supervisorMapping = userFactoryMappingRepository.findByUser(supervisor)
                 .orElseThrow(() -> new UnauthorizedAccessException("Supervisor is not mapped to any factory/bay"));
 
@@ -64,7 +64,7 @@ public class ChiefSupervisorServiceImpl implements CheifSupervisorService {
         Bay selectedBay = bayRepository.findById(dto.getBayId())
                 .orElseThrow(() -> new ResourceNotFoundException("Selected bay not found"));
 
-        //  Validate: Bay must belong to same factory as supervisor
+        // Bay must belong to same factory as supervisor
         if (!selectedBay.getFactory().getId().equals(supervisorMapping.getFactory().getId())) {
             throw new ResourceNotFoundException("Selected bay does not belong to your factory");
         }
@@ -98,7 +98,7 @@ public class ChiefSupervisorServiceImpl implements CheifSupervisorService {
                 selectedBay.getName()
         );
 
-        // Send Email Notification to Worker
+        // Email Notification to Worker
         String loginUrl = "http://localhost:8080/login";
 
         String subject = "Welcome to Supply Chain System - Worker Account Created";
@@ -187,7 +187,7 @@ public class ChiefSupervisorServiceImpl implements CheifSupervisorService {
         UserFactoryMapping supervisorMapping = userFactoryMappingRepository.findByUser(supervisor)
                 .orElseThrow(() -> new UnauthorizedAccessException("Supervisor is not mapped to any factory/bay"));
 
-        //  Get worker mapping (to fetch factory and bay info)
+        //  Get worker mapping
         UserFactoryMapping workerMapping = userFactoryMappingRepository.findByUser(worker)
                 .orElse(null);
 

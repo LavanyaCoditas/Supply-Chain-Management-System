@@ -4,6 +4,7 @@ import com.project.supply.chain.management.ServiceInterfaces.*;
 import com.project.supply.chain.management.dto.*;
 import com.project.supply.chain.management.entity.User;
 import com.project.supply.chain.management.util.ApplicationUtils;
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -177,7 +178,7 @@ public class UserController {
         return ResponseEntity.ok(response);
     }
 
-    @PutMapping(value = "/update/merchandise/{id}", consumes = {"multipart/form-data"})
+    @PostMapping(value = "/update/merchandise/{id}", consumes = {"multipart/form-data"})
     @PreAuthorize("hasAnyAuthority('OWNER', 'CENTRAL_OFFICE')")
     public ResponseEntity<ApiResponseDto<MerchandiseResponseDto>> updateMerchandise(
             @PathVariable Long id,
@@ -222,7 +223,7 @@ public class UserController {
     }
 
     @PostMapping("/add/factory/employees")
-    public ResponseEntity<ApiResponseDto<UserResponseDto>> createEmployee(@RequestBody EmployeeRequestDto request) {
+    public ResponseEntity<ApiResponseDto<UserResponseDto>> createEmployee(@Valid @RequestBody EmployeeRequestDto request) {
         ApiResponseDto<UserResponseDto> response = plantHeadService.createEmployeeForCurrentPlantHead(request);
         return ResponseEntity.ok(response);
     }
@@ -244,7 +245,7 @@ public class UserController {
     }
     @PostMapping("/factory/update/inventory")
     @PreAuthorize("hasAuthority('PLANT_HEAD')")
-    public ResponseEntity<ApiResponseDto<Void>> updateFactoryStock(@RequestBody UpdateStockRequestDto request) {
+    public ResponseEntity<ApiResponseDto<Void>> updateFactoryStock(@Valid @RequestBody UpdateStockRequestDto request) {
         ApiResponseDto<Void> response = plantHeadService.updateFactoryProductStock(request);
         return ResponseEntity.ok(response);
     }

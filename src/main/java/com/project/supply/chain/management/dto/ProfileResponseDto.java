@@ -8,6 +8,7 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class ProfileResponseDto {
+
     private String username;
     private String email;
     private Long phone;

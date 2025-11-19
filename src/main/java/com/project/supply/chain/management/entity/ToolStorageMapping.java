@@ -7,7 +7,9 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "tool_storage_mapping")
-@Data @NoArgsConstructor @AllArgsConstructor
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class ToolStorageMapping {
    @Id
    @GeneratedValue(strategy = GenerationType.IDENTITY)

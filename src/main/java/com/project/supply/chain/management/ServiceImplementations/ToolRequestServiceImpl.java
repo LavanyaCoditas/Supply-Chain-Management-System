@@ -35,7 +35,7 @@ import java.util.List;
     private final UserFactoryMappingRepository userFactoryMappingRepository;
     private final ApplicationUtils appUtils;
 
-    //    WORKER CREATES REQUEST
+    //  WORKER  REQUEST
     @Override
     @Transactional
     public ApiResponseDto<String> requestTool(ToolRequestDto dto) {
@@ -78,14 +78,13 @@ import java.util.List;
                 normalItems.add(item);
         }
 
-        // Create request for expensive tools
+        //  request for expensive tools
         if (!expensiveItems.isEmpty())
             createToolRequest(worker, expensiveItems);
 
-        // Create request for normal tools
+        //  request for normal tools
         if (!normalItems.isEmpty())
             createToolRequest(worker, normalItems);
-
         return new ApiResponseDto<>(true, "Tool request submitted successfully", null);
     }
 
@@ -104,7 +103,7 @@ import java.util.List;
     }
 
 
-    //   APPROVER HANDLES REQUEST -------------------------
+    //    REQUEST HANDLING
     @Override
     @Transactional
     public ApiResponseDto<String> handleToolRequest(Long requestId, boolean approve, String reason) {

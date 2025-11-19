@@ -16,7 +16,9 @@ import java.util.List;
 
 @Entity
 @Table(name = "users")
-@Data @NoArgsConstructor @AllArgsConstructor
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 @ToString(exclude = {"factoryMappings"})
 public class User implements UserDetails {
     @Id

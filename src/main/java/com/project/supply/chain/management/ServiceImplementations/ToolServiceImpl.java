@@ -151,9 +151,7 @@ public class ToolServiceImpl implements ToolService {
     @Override
     @Transactional
     public ApiResponseDto<String> addToolToFactoryStock(ToolInventoryStockDto dto) {
-        //  Logged-in user
-        String email = appUtils.getLoggedInUserEmail();
-        User user=appUtils.getUser(email);
+        User user=appUtils.getUser( appUtils.getLoggedInUserEmail());
 
         if (user == null) throw new UserNotFoundException("User not found");
         if (user.getRole() != Role.PLANT_HEAD) {

@@ -11,5 +11,5 @@ import java.util.List;
 public class CentralOfficeResponseDto {
     private Long id;
     private String location;
-    private List<UserListDto> officers;  // Reusing your existing UserListDto
+    private List<UserListDto> officers;
 }

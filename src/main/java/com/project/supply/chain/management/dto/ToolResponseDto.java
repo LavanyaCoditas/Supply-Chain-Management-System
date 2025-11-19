@@ -1,4 +1,4 @@
-// 📁 com.project.supply.chain.management.dto.ToolResponseDto.java
+
 package com.project.supply.chain.management.dto;
 
 import com.project.supply.chain.management.constants.Expensive;

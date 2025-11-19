@@ -11,10 +11,3 @@ public class EmployeeOverviewDto {
         private String role;
     private Long count;
 }
-//@Data
-//@AllArgsConstructor
-//@NoArgsConstructor
-//public class EmployeeOverviewDto {
-//    private String role;
-//    private Long count;
-//}

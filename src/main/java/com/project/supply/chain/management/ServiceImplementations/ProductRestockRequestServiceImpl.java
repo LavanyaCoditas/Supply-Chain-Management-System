@@ -41,7 +41,7 @@ public class ProductRestockRequestServiceImpl implements ProductRestockRequestSe
     @Override
     @Transactional
     public ApiResponseDto<ProductRestockRequestDto> createRestockRequest(CreateRestockRequestDto requestDto) {
-        try {
+
             User currentUser = getCurrentUser();
             if (currentUser.getRole() != Role.CENTRAL_OFFICE) {
                 throw new UnauthorizedAccessException("Only central officers can create restock requests");
@@ -70,25 +70,25 @@ public class ProductRestockRequestServiceImpl implements ProductRestockRequestSe
 
             CentralOfficeProductRequest savedRequest = centralOfficeProductRequestRepository.save(request);
 
-            // Convert to response DTO
+
             ProductRestockRequestDto responseDto = convertToRestockRequestDto(savedRequest);
             responseDto.setCurrentFactoryStock(currentFactoryStock);
 
             return new ApiResponseDto<>(true, "Restock request created successfully", responseDto);
 
-        } catch (UnauthorizedAccessException | ResourceNotFoundException e) {
-            log.warn("Business rule violation: {}", e.getMessage());
-            return new ApiResponseDto<>(false, e.getMessage(), null);
-        } catch (Exception e) {
-            log.error("Failed to create restock request", e);
-            return new ApiResponseDto<>(false, "Failed to create restock request: " + e.getMessage(), null);
-        }
+
+//            log.warn("Business rule violation: {}", e.getMessage());
+//            return new ApiResponseDto<>(false, e.getMessage(), null);
+//
+//            log.error("Failed to create restock request", e);
+//            return new ApiResponseDto<>(false, "Failed to create restock request: " + e.getMessage(), null);
+
     }
     @Override
     public ApiResponseDto<Page<CentralOfficeInventoryDto>> getCentralOfficeInventory(
             Long productId, String productName, Long minQuantity, Long maxQuantity, BaseRequestDto requestDto) {
         try {
-            // Build specification with filters
+            // specification with filters
             Specification<CentralOfficeInventory> spec = CentralOfficeInventorySpecifications.withFilters(
                     productId, productName, minQuantity, maxQuantity
             );
@@ -126,10 +126,7 @@ public class ProductRestockRequestServiceImpl implements ProductRestockRequestSe
 //    Page<CentralOfficeProductRequest> findByStatus(ToolOrProductRequestStatus s
             Page<ProductRestockRequestDto> resultPage = restockPage.map(this::convertToRestockRequestDto);
 
-            String message = status != null
-                    ? "Your " + status + " restock requests retrieved successfully"
-                    : "Your restock requests retrieved successfully";
-
+            String message = status != null ? "Your " + status + " restock requests retrieved successfully" : "Your restock requests retrieved successfully";
             return new ApiResponseDto<>(true, message, resultPage);
 
         } catch (UnauthorizedAccessException e) {
@@ -201,7 +198,7 @@ public class ProductRestockRequestServiceImpl implements ProductRestockRequestSe
                 return new ApiResponseDto<>(false, "Only pending requests can be completed", null);
             }
 
-            // Check if factory has enough stock to fulfill the request
+            // Check factory has enough stock to fulfill the request
             if (!hasSufficientStock(request.getFactory(), request.getProduct(), request.getQtyRequested())) {
                 return new ApiResponseDto<>(false, "Insufficient stock. Factory only has " +
                         getCurrentStock(request.getFactory(), request.getProduct()) +
@@ -298,12 +295,9 @@ public class ProductRestockRequestServiceImpl implements ProductRestockRequestSe
     }
 
     private boolean hasAccessToFactory(User user, Long factoryId) {
-        // Implement your factory access logic here
-        // For managers, check if they are assigned to this factory
         if (user.getRole() == Role.PLANT_HEAD) {
             return factoryId.equals(getCurrentUserFactoryId(user));
         }
-        // Owners have access to all factories
         return user.getRole() == Role.OWNER;
     }
 
